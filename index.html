@@ -29,7 +29,14 @@
                             red: '#E31937',  
                             light: '#F4F6F9', 
                             dark: '#2B2D42',
-                            gray: '#5B667A'
+                            gray: '#5B667A',
+                            danger: '#B91C1C',
+                            'danger-light': '#FEF2F2',
+                            success: '#166534',
+                            'success-light': '#F0FDF4',
+                            warning: '#92400E',
+                            'warning-light': '#FFFBEB',
+                            'info-light': '#EFF6FF'
                         }
                     }
                 }
@@ -238,10 +245,10 @@
             </div>
             
             <div class="flex justify-between items-center w-full mt-2 border-t border-gray-100 pt-4">
-                <button onclick="clearAllData()" class="text-red-500 hover:text-red-700 transition-colors font-bold text-sm flex items-center gap-1" title="Zerar Banco de Dados">
+                <button onclick="clearAllData()" class="text-brand-danger hover:text-red-800 transition-colors font-bold text-sm flex items-center gap-1" title="Zerar Banco de Dados">
                     <i class="ph-bold ph-trash" aria-hidden="true"></i> Apagar Todos os Dados
                 </button>
-                <button onclick="clearFilters()" class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition-colors font-bold text-sm flex items-center gap-1" title="Limpar Filtros e Ver Tudo">
+                <button onclick="clearFilters()" class="bg-gray-100 text-gray-700 border border-gray-300 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors font-bold text-sm flex items-center gap-1" title="Limpar Filtros e Ver Tudo">
                     <i class="ph-bold ph-arrows-counter-clockwise" aria-hidden="true"></i> Redefinir Filtros
                 </button>
             </div>
@@ -262,7 +269,7 @@
                 <h3 class="text-2xl font-bold text-brand-blue flex items-center gap-2" id="import-modal-title">
                     <i class="ph-fill ph-magic-wand" aria-hidden="true"></i> Redator Especialista e Importador
                 </h3>
-                <button onclick="closeModal()" class="text-gray-500 hover:text-brand-red transition-colors bg-white p-2 rounded-full shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-blue focus:ring-offset-2" aria-label="Fechar importador">
+                <button onclick="closeModal()" class="text-gray-600 hover:text-brand-danger transition-colors bg-white p-2 rounded-full shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-blue focus:ring-offset-2" aria-label="Fechar importador">
                     <i class="ph-bold ph-x text-xl" aria-hidden="true"></i>
                 </button>
             </div>
@@ -270,10 +277,10 @@
             <div class="p-6 overflow-y-auto flex-grow bg-gray-100" id="modal-body">
                 <div id="stage-upload" class="h-full flex flex-col items-center justify-center">
                     <input type="file" id="word-upload" accept=".docx" multiple class="sr-only peer" onchange="processWordFiles(event)" aria-describedby="upload-help upload-limits">
-                    <label for="word-upload" class="p-10 border-2 border-dashed border-brand-blue rounded-2xl bg-white text-center w-full max-w-xl cursor-pointer hover:bg-blue-50 transition-all shadow-sm peer-focus-visible:ring-4 peer-focus-visible:ring-brand-blue peer-focus-visible:ring-offset-2">
+                    <label for="word-upload" class="p-10 border-2 border-dashed border-brand-blue rounded-2xl bg-white text-center w-full max-w-xl cursor-pointer hover:bg-brand-info-light transition-all shadow-sm peer-focus-visible:ring-4 peer-focus-visible:ring-brand-blue peer-focus-visible:ring-offset-2">
                         <span class="block"><i class="ph-fill ph-file-doc text-7xl text-brand-blue mb-4" aria-hidden="true"></i></span>
                         <span class="block text-xl font-bold text-brand-blue" id="upload-feedback">Selecionar arquivos Word (.docx)</span>
-                        <span class="block text-sm text-gray-500 mt-2" id="upload-help">A ferramenta fará a limpeza aplicando as Normas Editoriais Semânticas.</span>
+                        <span class="block text-sm text-gray-600 mt-2" id="upload-help">A ferramenta fará a limpeza aplicando as Normas Editoriais Semânticas.</span>
                         <span class="block text-xs text-brand-gray mt-4 text-left max-w-xs mx-auto" id="upload-limits">
                             Títulos: máx. 200 caracteres<br>
                             Sínteses (Lead): máx. 500 caracteres<br>
@@ -305,7 +312,7 @@
                 <h3 class="text-xl font-bold text-brand-blue flex items-center gap-2" id="crop-modal-title">
                     <i class="ph-bold ph-crop" aria-hidden="true"></i> Ajustar Enquadramento Fotográfico
                 </h3>
-                <button onclick="closeCropModal()" class="text-gray-500 hover:text-brand-red transition focus:outline-none focus:ring-2 focus:ring-brand-blue focus:ring-offset-2" aria-label="Fechar ajuste de imagem"><i class="ph-bold ph-x text-xl" aria-hidden="true"></i></button>
+                <button onclick="closeCropModal()" class="text-gray-600 hover:text-brand-danger transition focus:outline-none focus:ring-2 focus:ring-brand-blue focus:ring-offset-2" aria-label="Fechar ajuste de imagem"><i class="ph-bold ph-x text-xl" aria-hidden="true"></i></button>
             </div>
             <div class="p-6 bg-gray-200 flex justify-center items-center h-[60vh] max-h-[600px] overflow-hidden">
                 <!-- Imagem Target do Cropper -->
@@ -316,7 +323,7 @@
                     <i class="ph-fill ph-info" aria-hidden="true"></i> Arraste a imagem ou redimensione a área de corte. A proporção está travada para o PDF oficial (1000x500).
                 </p>
                 <div class="flex gap-3">
-                    <button onclick="closeCropModal()" class="px-5 py-2 bg-gray-200 text-gray-700 font-bold rounded-lg hover:bg-gray-300 transition">Cancelar</button>
+                    <button onclick="closeCropModal()" class="px-5 py-2 bg-gray-100 border border-gray-300 text-gray-700 font-bold rounded-lg hover:bg-gray-200 transition">Cancelar</button>
                     <button onclick="applyCrop()" class="px-5 py-2 bg-brand-blue text-white font-bold rounded-lg hover:bg-blue-800 transition shadow-md flex items-center gap-2">
                         <i class="ph-bold ph-check" aria-hidden="true"></i> Aplicar Corte
                     </button>
@@ -332,7 +339,7 @@
                 <h3 class="text-xl font-bold text-brand-blue flex items-center gap-2" id="edit-single-modal-title">
                     <i class="ph-fill ph-pencil-simple" aria-hidden="true"></i> Editar Matéria (Padrão Normatizado)
                 </h3>
-                <button onclick="closeEditModal()" class="text-gray-500 hover:text-brand-red transition-colors bg-white p-2 rounded-full shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-blue focus:ring-offset-2" aria-label="Fechar edição da matéria">
+                <button onclick="closeEditModal()" class="text-gray-600 hover:text-brand-danger transition-colors bg-white p-2 rounded-full shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-blue focus:ring-offset-2" aria-label="Fechar edição da matéria">
                     <i class="ph-bold ph-x text-xl" aria-hidden="true"></i>
                 </button>
             </div>
@@ -363,7 +370,7 @@
                 </div>
                 <div>
                     <label for="edit-single-lead" class="flex justify-between text-[10px] font-bold text-brand-gray uppercase mb-1"><span>Síntese Estratégica (Lead)</span> <span id="count-lead" class="text-brand-red" aria-live="polite"></span></label>
-                    <textarea id="edit-single-lead" rows="2" maxlength="500" oninput="document.getElementById('count-lead').innerText = this.value.length + '/500';" class="w-full border border-gray-300 rounded p-3 focus:outline-none focus:ring-2 focus:ring-brand-blue text-sm text-brand-dark font-semibold leading-relaxed bg-gray-50 border-l-4 border-l-brand-red"></textarea>
+                    <textarea id="edit-single-lead" rows="2" maxlength="500" oninput="document.getElementById('count-lead').innerText = this.value.length + '/500';" class="w-full border border-red-200 rounded p-3 focus:outline-none focus:ring-2 focus:ring-brand-blue text-sm text-brand-dark font-semibold leading-relaxed bg-red-50"></textarea>
                 </div>
                 <div>
                     <label for="edit-single-content" class="flex justify-between text-[10px] font-bold text-brand-gray uppercase mb-1"><span>Corpo Institucional (Detalhes)</span> <span id="count-content" class="text-brand-red" aria-live="polite"></span></label>
@@ -382,11 +389,11 @@
     <!-- Modal de Confirmação -->
     <div id="custom-confirm-modal" class="fixed inset-0 bg-brand-dark bg-opacity-80 z-[1000] hidden flex items-center justify-center p-4 hide-on-pdf backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="confirm-modal-title" aria-describedby="confirm-modal-text" aria-hidden="true" tabindex="-1">
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md flex flex-col overflow-hidden">
-            <div class="p-5 border-b border-gray-200 flex justify-between items-center bg-red-50">
-                <h3 id="confirm-modal-title" class="text-xl font-bold text-brand-red flex items-center gap-2">
+            <div class="p-5 border-b border-gray-200 flex justify-between items-center bg-brand-danger-light">
+                <h3 id="confirm-modal-title" class="text-xl font-bold text-brand-danger flex items-center gap-2">
                     <i class="ph-fill ph-warning-circle" aria-hidden="true"></i> <span id="confirm-modal-title-text">Atenção</span>
                 </h3>
-                <button onclick="closeConfirmModal()" class="text-gray-500 hover:text-brand-red transition-colors bg-white p-2 rounded-full shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-blue focus:ring-offset-2" aria-label="Fechar confirmação">
+                <button onclick="closeConfirmModal()" class="text-gray-600 hover:text-brand-danger transition-colors bg-white p-2 rounded-full shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-blue focus:ring-offset-2" aria-label="Fechar confirmação">
                     <i class="ph-bold ph-x text-xl" aria-hidden="true"></i>
                 </button>
             </div>
@@ -395,7 +402,7 @@
             </div>
             <div class="p-4 border-t border-gray-200 bg-gray-50 flex justify-end gap-3">
                 <button onclick="closeConfirmModal()" class="px-5 py-2 text-gray-600 font-bold hover:bg-gray-200 rounded-lg transition" id="confirm-cancel-button">Cancelar</button>
-                <button onclick="executeConfirmAction()" class="px-5 py-2 bg-brand-red text-white font-bold rounded-lg hover:bg-red-700 shadow-md transition flex items-center gap-2" id="confirm-action-button">
+                <button onclick="executeConfirmAction()" class="px-5 py-2 bg-brand-danger text-white font-bold rounded-lg hover:bg-red-800 shadow-md transition flex items-center gap-2" id="confirm-action-button">
                     <i class="ph-bold ph-trash" aria-hidden="true"></i> Sim, Apagar
                 </button>
             </div>
@@ -889,19 +896,19 @@
                 let imgThumb = item.image ? `<div class="w-full h-32 bg-gray-50 flex items-center justify-center rounded-lg mb-3 overflow-hidden relative">
                     <img src="${safeImage}" alt="${imageAlt}" class="max-w-full max-h-full object-cover">
                     <button onclick="openCropModal('${item.id}', true)" class="absolute top-2 left-2 bg-white text-brand-blue p-2 rounded-full hover:bg-brand-blue hover:text-white transition shadow-md border border-gray-200 focus:outline-none focus:ring-2 focus:ring-brand-blue focus:ring-offset-2" aria-label="Ajustar enquadramento da imagem"><i class="ph-bold ph-crop" aria-hidden="true"></i></button>
-                    </div>` : `<div class="w-full h-32 bg-gray-100 flex items-center justify-center rounded-lg mb-3" aria-label="Pauta sem imagem"><i class="ph ph-image text-4xl text-gray-300" aria-hidden="true"></i></div>`;
+                    </div>` : `<div class="w-full h-32 bg-gray-100 flex items-center justify-center rounded-lg mb-3" aria-label="Pauta sem imagem"><i class="ph ph-image text-4xl text-brand-gray" aria-hidden="true"></i></div>`;
                 
                 card.innerHTML = `
-                    <button onclick="removeParsedCard('${item.id}')" class="absolute top-2 right-2 bg-red-50 text-red-600 p-2 rounded-full hover:bg-red-200 transition opacity-100 sm:opacity-0 sm:group-hover:opacity-100 focus:opacity-100 z-10 shadow-sm border border-red-100 focus:outline-none focus:ring-2 focus:ring-brand-blue focus:ring-offset-2" aria-label="Excluir pauta desta importação"><i class="ph-bold ph-trash" aria-hidden="true"></i></button>
+                    <button onclick="removeParsedCard('${item.id}')" class="absolute top-2 right-2 bg-brand-danger-light text-brand-danger p-2 rounded-full hover:bg-red-100 transition opacity-100 sm:opacity-0 sm:group-hover:opacity-100 focus:opacity-100 z-10 shadow-sm border border-red-200 focus:outline-none focus:ring-2 focus:ring-brand-blue focus:ring-offset-2" aria-label="Excluir pauta desta importação"><i class="ph-bold ph-trash" aria-hidden="true"></i></button>
                     ${imgThumb}
                     <div class="grid grid-cols-2 gap-2 mb-2">
                         <div><label for="edit-unit-${item.id}" class="text-[10px] font-bold text-brand-gray uppercase">Unidade</label><input type="text" value="${safeUnit}" id="edit-unit-${item.id}" class="w-full font-bold text-sm text-brand-blue border-b border-gray-300 focus:outline-none focus:ring-2 focus:ring-brand-blue bg-transparent uppercase"></div>
                         <div><label for="edit-date-${item.id}" class="text-[10px] font-bold text-brand-gray uppercase">Data</label><input type="date" value="${safeDate}" id="edit-date-${item.id}" class="w-full text-xs border border-gray-300 rounded p-1 focus:outline-none focus:ring-2 focus:ring-brand-blue font-bold text-brand-dark"></div>
                     </div>
                     <div class="mb-2"><label for="edit-title-${item.id}" class="flex justify-between text-[10px] font-bold text-brand-gray uppercase"><span>Manchete</span> <span aria-live="polite">${item.title.length}/200</span></label><textarea id="edit-title-${item.id}" maxlength="200" rows="2" class="w-full text-sm font-bold border border-gray-300 rounded p-1.5 focus:outline-none focus:ring-2 focus:ring-brand-blue bg-gray-50 resize-none text-brand-dark" style="font-family: 'Montserrat', sans-serif;">${safeTitle}</textarea></div>
-                    <div class="mb-2"><label for="edit-lead-${item.id}" class="flex justify-between text-[10px] font-bold text-brand-gray uppercase"><span>Síntese (Lead)</span> <span aria-live="polite">${item.lead.length}/500</span></label><textarea id="edit-lead-${item.id}" maxlength="500" rows="3" class="w-full text-xs font-semibold text-brand-dark border border-gray-300 rounded p-2 focus:outline-none focus:ring-2 focus:ring-brand-blue bg-red-50 resize-none" style="font-family: 'Montserrat', sans-serif;">${safeLead}</textarea></div>
+                    <div class="mb-2"><label for="edit-lead-${item.id}" class="flex justify-between text-[10px] font-bold text-brand-gray uppercase"><span>Síntese (Lead)</span> <span aria-live="polite">${item.lead.length}/500</span></label><textarea id="edit-lead-${item.id}" maxlength="500" rows="3" class="w-full text-xs font-semibold text-brand-dark border border-red-200 rounded p-2 focus:outline-none focus:ring-2 focus:ring-brand-blue bg-red-50 resize-none" style="font-family: 'Montserrat', sans-serif;">${safeLead}</textarea></div>
                     <div class="mb-2"><label for="edit-content-${item.id}" class="flex justify-between text-[10px] font-bold text-brand-gray uppercase"><span>Detalhes Institucionais</span> <span aria-live="polite">${item.content.length}/1500</span></label><textarea id="edit-content-${item.id}" maxlength="1500" rows="3" class="w-full text-xs border border-gray-300 rounded p-2 focus:outline-none focus:ring-2 focus:ring-brand-blue text-gray-700 leading-relaxed resize-none" style="font-family: 'Montserrat', sans-serif;">${safeContent}</textarea></div>
-                    <div><label for="edit-type-${item.id}" class="text-[10px] font-bold text-brand-gray uppercase">Eixo</label><select id="edit-type-${item.id}" class="w-full text-xs border border-gray-300 rounded p-1.5 focus:outline-none focus:ring-2 focus:ring-brand-blue bg-blue-50 text-brand-blue font-semibold"><option value="Educação e Qualificação" ${safeType === 'Educação e Qualificação' ? 'selected' : ''}>Educação e Qualificação</option><option value="Saúde e Segurança" ${safeType === 'Saúde e Segurança' ? 'selected' : ''}>Saúde e Segurança</option><option value="Indústria 4.0 e Inovação" ${safeType === 'Indústria 4.0 e Inovação' ? 'selected' : ''}>Indústria 4.0 e Inovação</option><option value="Relações Institucionais" ${safeType === 'Relações Institucionais' ? 'selected' : ''}>Relações Institucionais</option></select></div>
+                    <div><label for="edit-type-${item.id}" class="text-[10px] font-bold text-brand-gray uppercase">Eixo</label><select id="edit-type-${item.id}" class="w-full text-xs border border-gray-300 rounded p-1.5 focus:outline-none focus:ring-2 focus:ring-brand-blue bg-brand-info-light text-brand-blue font-semibold"><option value="Educação e Qualificação" ${safeType === 'Educação e Qualificação' ? 'selected' : ''}>Educação e Qualificação</option><option value="Saúde e Segurança" ${safeType === 'Saúde e Segurança' ? 'selected' : ''}>Saúde e Segurança</option><option value="Indústria 4.0 e Inovação" ${safeType === 'Indústria 4.0 e Inovação' ? 'selected' : ''}>Indústria 4.0 e Inovação</option><option value="Relações Institucionais" ${safeType === 'Relações Institucionais' ? 'selected' : ''}>Relações Institucionais</option></select></div>
                 `;
                 container.appendChild(card);
             });
@@ -1024,7 +1031,7 @@
 
         function renderNewsFeed(data) {
             const feed = document.getElementById('news-feed'); if(!feed) return; feed.innerHTML = '';
-            if(data.length === 0) { feed.innerHTML = '<p class="text-gray-500 text-center p-12 bg-white rounded-xl font-medium italic text-lg shadow-sm border border-gray-100">A mesa de redação não encontrou pautas para o filtro selecionado.</p>'; return; }
+            if(data.length === 0) { feed.innerHTML = '<p class="text-brand-gray text-center p-12 bg-white rounded-xl font-medium italic text-lg shadow-sm border border-gray-100">A mesa de redação não encontrou pautas para o filtro selecionado.</p>'; return; }
             const sortedData = [...data].sort((a, b) => new Date(b.date) - new Date(a.date));
             
             sortedData.forEach(item => {
@@ -1060,8 +1067,8 @@
                 let imageHtml = item.image ? `<div class="w-full news-image-container drop-shadow-sm"><img src="${safeImage}" alt="${reportImageAlt}" class="news-image"></div>` : '';
 
                 card.innerHTML = `
-                    <div id="overlay-card-${item.id}" class="hidden absolute inset-0 bg-white bg-opacity-70 z-10 flex items-center justify-center pointer-events-none"><span class="bg-brand-red text-white font-black px-6 py-2 rounded shadow-lg tracking-widest border border-red-800">OCULTADO DO PDF</span></div>
-                    <div class="hide-on-pdf bg-gray-50 border-b border-gray-200 px-6 py-3 flex justify-between items-center relative z-20 mb-6 rounded"><label for="include-pdf-${item.id}" class="flex items-center gap-2 cursor-pointer text-sm font-bold text-brand-blue select-none hover:text-blue-800 transition"><input id="include-pdf-${item.id}" type="checkbox" checked onchange="togglePdfInclusion(this, 'card-${item.id}')" class="w-5 h-5 rounded text-brand-blue focus:ring-brand-blue cursor-pointer" aria-label="Incluir ${safeTitle || 'matéria'} no relatório em PDF"> Incluir no Relatório (PDF)</label><div class="flex gap-2"><button onclick="editReport('${item.id}')" class="text-brand-blue hover:text-blue-800 flex items-center gap-1 text-xs font-bold transition px-3 py-2 hover:bg-blue-50 rounded border border-blue-200 focus:outline-none focus:ring-2 focus:ring-brand-blue focus:ring-offset-2" title="Editar Matéria"><i class="ph-bold ph-pencil-simple text-lg" aria-hidden="true"></i> Editar</button><button onclick="deleteReport('${item.id}')" class="text-gray-500 hover:text-white hover:bg-brand-red flex items-center gap-1 text-xs font-bold transition px-3 py-2 rounded border border-gray-300 hover:border-brand-red focus:outline-none focus:ring-2 focus:ring-brand-blue focus:ring-offset-2" title="Excluir Permanentemente"><i class="ph-fill ph-trash text-lg" aria-hidden="true"></i> Apagar</button></div></div>
+                    <div id="overlay-card-${item.id}" class="hidden absolute inset-0 bg-white bg-opacity-70 z-10 flex items-center justify-center pointer-events-none"><span class="bg-brand-danger text-white font-black px-6 py-2 rounded shadow-lg tracking-widest border border-red-900">OCULTADO DO PDF</span></div>
+                    <div class="hide-on-pdf bg-gray-50 border-b border-gray-200 px-6 py-3 flex justify-between items-center relative z-20 mb-6 rounded"><label for="include-pdf-${item.id}" class="flex items-center gap-2 cursor-pointer text-sm font-bold text-brand-blue select-none hover:text-blue-800 transition"><input id="include-pdf-${item.id}" type="checkbox" checked onchange="togglePdfInclusion(this, 'card-${item.id}')" class="w-5 h-5 rounded text-brand-blue focus:ring-brand-blue cursor-pointer" aria-label="Incluir ${safeTitle || 'matéria'} no relatório em PDF"> Incluir no Relatório (PDF)</label><div class="flex gap-2"><button onclick="editReport('${item.id}')" class="text-brand-blue hover:text-blue-800 flex items-center gap-1 text-xs font-bold transition px-3 py-2 hover:bg-brand-info-light rounded border border-blue-200 focus:outline-none focus:ring-2 focus:ring-brand-blue focus:ring-offset-2" title="Editar Matéria"><i class="ph-bold ph-pencil-simple text-lg" aria-hidden="true"></i> Editar</button><button onclick="deleteReport('${item.id}')" class="text-gray-600 hover:text-white hover:bg-brand-danger flex items-center gap-1 text-xs font-bold transition px-3 py-2 rounded border border-gray-300 hover:border-brand-danger focus:outline-none focus:ring-2 focus:ring-brand-blue focus:ring-offset-2" title="Excluir Permanentemente"><i class="ph-fill ph-trash text-lg" aria-hidden="true"></i> Apagar</button></div></div>
                     
                     <div class="pb-6">
                         <div class="border-t border-brand-blue pt-4">

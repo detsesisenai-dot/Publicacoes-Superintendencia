@@ -16,6 +16,48 @@
         "canonical": "#E31937",
         "tonalRamp": ["#3A050D", "#730A18", "#A91027", "#E31937", "#F04A61", "#F47A8B", "#FAB7C0", "#FDE6EA"]
       },
+      "danger": {
+        "role": "semantic",
+        "displayName": "Perigo",
+        "canonical": "#B91C1C",
+        "tonalRamp": ["#450A0A", "#7F1D1D", "#991B1B", "#B91C1C", "#DC2626", "#F87171", "#FECACA", "#FEF2F2"]
+      },
+      "danger-soft": {
+        "role": "semantic-surface",
+        "displayName": "Perigo Suave",
+        "canonical": "#FEF2F2",
+        "tonalRamp": ["#450A0A", "#7F1D1D", "#991B1B", "#B91C1C", "#DC2626", "#F87171", "#FECACA", "#FEF2F2"]
+      },
+      "success": {
+        "role": "semantic",
+        "displayName": "Sucesso",
+        "canonical": "#166534",
+        "tonalRamp": ["#052E16", "#14532D", "#166534", "#15803D", "#22C55E", "#86EFAC", "#BBF7D0", "#F0FDF4"]
+      },
+      "success-soft": {
+        "role": "semantic-surface",
+        "displayName": "Sucesso Suave",
+        "canonical": "#F0FDF4",
+        "tonalRamp": ["#052E16", "#14532D", "#166534", "#15803D", "#22C55E", "#86EFAC", "#BBF7D0", "#F0FDF4"]
+      },
+      "warning": {
+        "role": "semantic",
+        "displayName": "Aviso",
+        "canonical": "#92400E",
+        "tonalRamp": ["#451A03", "#78350F", "#92400E", "#B45309", "#F59E0B", "#FCD34D", "#FDE68A", "#FFFBEB"]
+      },
+      "warning-soft": {
+        "role": "semantic-surface",
+        "displayName": "Aviso Suave",
+        "canonical": "#FFFBEB",
+        "tonalRamp": ["#451A03", "#78350F", "#92400E", "#B45309", "#F59E0B", "#FCD34D", "#FDE68A", "#FFFBEB"]
+      },
+      "info-soft": {
+        "role": "semantic-surface",
+        "displayName": "Informacao Suave",
+        "canonical": "#EFF6FF",
+        "tonalRamp": ["#001326", "#00254A", "#003A70", "#16558D", "#3474AB", "#93C5FD", "#DBEAFE", "#EFF6FF"]
+      },
       "surface-page": {
         "role": "neutral",
         "displayName": "Fundo Operacional",
@@ -130,7 +172,7 @@
       "refersTo": "button-danger",
       "description": "Confirmacao de acao destrutiva, especialmente exclusao.",
       "html": "<button class=\"ds-btn-danger\">Sim, Apagar</button>",
-      "css": ".ds-btn-danger { display: inline-flex; align-items: center; gap: 8px; background: #E31937; color: #FFFFFF; border: 0; border-radius: 8px; padding: 8px 20px; font-family: Montserrat, sans-serif; font-size: 14px; font-weight: 700; cursor: pointer; transition: background-color 160ms ease-out; } .ds-btn-danger:hover { background: #B91C1C; } .ds-btn-danger:focus-visible { outline: 3px solid rgba(227,25,55,0.35); outline-offset: 2px; }"
+      "css": ".ds-btn-danger { display: inline-flex; align-items: center; gap: 8px; background: #B91C1C; color: #FFFFFF; border: 0; border-radius: 8px; padding: 8px 20px; font-family: Montserrat, sans-serif; font-size: 14px; font-weight: 700; cursor: pointer; transition: background-color 160ms ease-out; } .ds-btn-danger:hover { background: #991B1B; } .ds-btn-danger:focus-visible { outline: 3px solid rgba(185,28,28,0.35); outline-offset: 2px; }"
     },
     {
       "name": "Input Field",
@@ -154,7 +196,7 @@
       "refersTo": "card-surface",
       "description": "Preview de materia que vira pagina do PDF.",
       "html": "<article class=\"ds-report\"><div class=\"ds-unit\">SESI Goias</div><h3>Acao institucional fortalece atendimento nas unidades</h3><div class=\"ds-meta\">01 de junho de 2026 · Educacao e Qualificacao</div><p class=\"ds-lead\">Acao estrategica desenvolvida para ampliar a comunicacao institucional.</p><p>O conteudo apresenta detalhes da iniciativa, resultados e proximos encaminhamentos.</p></article>",
-      "css": ".ds-report { background: #FFFFFF; color: #2B2D42; font-family: Montserrat, sans-serif; padding: 16px 0 24px; border-top: 1px solid #003A70; } .ds-report .ds-unit { margin-bottom: 12px; color: #003A70; font-size: 10px; font-weight: 900; letter-spacing: 0.2em; text-transform: uppercase; } .ds-report h3 { margin: 0 0 16px; font-size: 21px; font-weight: 700; line-height: 1.3; } .ds-report .ds-meta { margin-bottom: 24px; color: #5B667A; font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; } .ds-report .ds-lead { margin: 0 0 20px; background: #F9FAFB; color: #2B2D42; border-left: 4px solid #E31937; padding: 12px 12px 12px 16px; font-size: 16px; font-weight: 600; line-height: 1.5; } .ds-report p { margin: 0 0 16px; color: #1F2937; font-size: 15px; font-weight: 400; line-height: 1.6; }"
+      "css": ".ds-report { background: #FFFFFF; color: #2B2D42; font-family: Montserrat, sans-serif; padding: 16px 0 24px; border-top: 1px solid #003A70; } .ds-report .ds-unit { margin-bottom: 12px; color: #003A70; font-size: 10px; font-weight: 900; letter-spacing: 0.2em; text-transform: uppercase; } .ds-report h3 { margin: 0 0 16px; font-size: 21px; font-weight: 700; line-height: 1.3; } .ds-report .ds-meta { margin-bottom: 24px; color: #5B667A; font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; } .ds-report .ds-lead { margin: 0 0 20px; background: #FEF2F2; color: #2B2D42; border: 1px solid #FECACA; border-radius: 4px; padding: 12px 16px; font-size: 16px; font-weight: 600; line-height: 1.5; } .ds-report p { margin: 0 0 16px; color: #1F2937; font-size: 15px; font-weight: 400; line-height: 1.6; }"
     }
   ],
   "narrative": {
@@ -162,7 +204,7 @@
     "overview": "O sistema atual combina uma mesa de trabalho editorial com acabamento executivo institucional. A interface precisa sustentar tarefas de importacao, revisao, organizacao, recorte de imagem e geracao de PDF sem competir com o conteudo jornalistico.",
     "keyCharacteristics": [
       "Interface de produto, nao landing page.",
-      "Paleta institucional restrita com azul como cor de acao e vermelho como cor de enfase ou risco.",
+      "Paleta institucional restrita com azul como cor de acao, vermelho como enfase editorial e token proprio para perigo.",
       "Componentes densos, escaneaveis e voltados a revisao editorial.",
       "PDF final mais plano e normatizado que a interface web.",
       "Linguagem visual moderna, limpa e sem efeitos decorativos desnecessarios."
@@ -170,12 +212,17 @@
     "rules": [
       {
         "name": "The Institutional Accent Rule",
-        "body": "Azul e vermelho devem aparecer como acao, identidade, enfase ou risco. Eles nao devem virar decoracao de fundo.",
+        "body": "Azul e vermelho devem aparecer como acao, identidade ou enfase editorial. Eles nao devem virar decoracao de fundo.",
         "section": "colors"
       },
       {
         "name": "The Contrast Rule",
         "body": "Texto secundario precisa manter contraste WCAG AA. Nunca use cinza claro para labels, placeholders ou metadados importantes.",
+        "section": "colors"
+      },
+      {
+        "name": "The Semantic State Rule",
+        "body": "Vermelho institucional pode comunicar enfase editorial, mas acoes destrutivas devem usar o token Perigo. Estados de informacao, sucesso e aviso devem usar pares de texto/fundo ja verificados.",
         "section": "colors"
       },
       {
@@ -197,7 +244,7 @@
     "dos": [
       "Do preservar a linguagem de produto interno: comandos claros, estados explicitos e telas voltadas a revisao editorial.",
       "Do usar Azul Institucional para acao primaria, foco, icones importantes e estrutura de documento.",
-      "Do usar Vermelho Editorial apenas para risco, exclusao, filtros ativos ou enfase editorial controlada.",
+      "Do usar Vermelho Editorial para filtros ativos ou enfase editorial controlada, reservando o token Perigo para exclusao.",
       "Do manter o PDF visualmente mais plano que a tela, com tipografia consistente e paginas previsiveis.",
       "Do escrever rotulos em portugues formal do Brasil, sem abreviacoes desnecessarias.",
       "Do garantir contraste WCAG AA antes de reutilizar cinzas em labels, placeholders e metadados."
@@ -207,7 +254,7 @@
       "Don't fazer a ferramenta parecer um editor amador de redes sociais.",
       "Don't criar um painel corporativo pesado ou uma pagina experimental.",
       "Don't usar excesso de efeitos visuais, caixas competindo por atencao ou decoracao sem funcao.",
-      "Don't expandir bordas laterais coloridas grossas como padrao visual; elas ja aparecem no estado atual e devem ser reduzidas em uma futura rodada.",
+      "Don't usar bordas laterais coloridas grossas como padrao visual; prefira borda completa fina, fundo suave ou icone de estado.",
       "Don't misturar portugues europeu com portugues do Brasil em comandos de interface.",
       "Don't depender de texto cinza claro para informacoes importantes."
     ]

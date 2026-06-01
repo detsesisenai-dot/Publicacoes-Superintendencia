@@ -15,8 +15,12 @@ colors:
   neutral-control-border: "#D1D5DB"
   neutral-hover: "#E5E7EB"
   info-soft: "#EFF6FF"
+  danger: "#B91C1C"
   danger-soft: "#FEF2F2"
-  danger-text: "#DC2626"
+  success: "#166534"
+  success-soft: "#F0FDF4"
+  warning: "#92400E"
+  warning-soft: "#FFFBEB"
 typography:
   display:
     fontFamily: "Montserrat, sans-serif"
@@ -75,7 +79,7 @@ components:
     rounded: "{rounded.md}"
     padding: "8px 16px"
   button-danger:
-    backgroundColor: "{colors.primary-red}"
+    backgroundColor: "{colors.danger}"
     textColor: "{colors.surface-white}"
     typography: "{typography.body}"
     rounded: "{rounded.md}"
@@ -112,18 +116,24 @@ O sistema rejeita aparencia de peca publicitaria chamativa, editor amador de red
 
 **Key Characteristics:**
 - Interface de produto, nao landing page.
-- Paleta institucional restrita com azul como cor de acao e vermelho como cor de enfase ou risco.
+- Paleta institucional restrita com azul como cor de acao, vermelho como enfase editorial e token proprio para perigo.
 - Componentes densos, escaneaveis e voltados a revisao editorial.
 - PDF final mais plano e normatizado que a interface web.
 - Linguagem visual moderna, limpa e sem efeitos decorativos desnecessarios.
 
 ## 2. Colors
 
-A paleta atual e institucional e restrita: azul profundo para identidade e acoes, vermelho para enfase editorial/risco, fundos claros para leitura prolongada e neutros para estrutura.
+A paleta atual e institucional e restrita: azul profundo para identidade e acoes, vermelho para enfase editorial, perigo semantico para exclusao, fundos claros para leitura prolongada e neutros para estrutura.
 
 ### Primary
 - **Azul Institucional**: cor de identidade, botoes primarios, icones principais, foco e linhas de estrutura.
-- **Vermelho Editorial**: cor de alerta, exclusao, destaque de filtros ativos, barras editoriais e indicacao de risco.
+- **Vermelho Editorial**: cor de enfase editorial, destaque de filtros ativos e indicacao visual controlada.
+
+### Semantic
+- **Perigo**: usado em exclusao, confirmacao destrutiva e estados que removem dados. Usa texto/fundo fortes o suficiente para WCAG AA.
+- **Informacao**: usado em superficies azuis muito claras, seletores e estados de apoio vinculados ao eixo institucional.
+- **Sucesso**: reservado para confirmacoes de salvamento, importacao concluida e processos finalizados.
+- **Aviso**: reservado para pendencias, limites e estados que exigem atencao antes de gerar o PDF.
 
 ### Neutral
 - **Fundo Operacional**: fundo principal da pagina, usado para separar a area de trabalho dos paineis brancos.
@@ -135,9 +145,11 @@ A paleta atual e institucional e restrita: azul profundo para identidade e acoes
 
 ### Named Rules
 
-**The Institutional Accent Rule.** Azul e vermelho devem aparecer como acao, identidade, enfase ou risco. Eles nao devem virar decoracao de fundo.
+**The Institutional Accent Rule.** Azul e vermelho devem aparecer como acao, identidade ou enfase editorial. Eles nao devem virar decoracao de fundo.
 
 **The Contrast Rule.** Texto secundario precisa manter contraste WCAG AA. Nunca use cinza claro para labels, placeholders ou metadados importantes.
+
+**The Semantic State Rule.** Vermelho institucional pode comunicar enfase editorial, mas acoes destrutivas devem usar o token Perigo. Estados de informacao, sucesso e aviso devem usar pares de texto/fundo ja verificados.
 
 ## 3. Typography
 
@@ -221,7 +233,7 @@ O card de revisao aparece apos importar Word. Ele concentra miniatura, unidade, 
 
 - **Do** preservar a linguagem de produto interno: comandos claros, estados explicitos e telas voltadas a revisao editorial.
 - **Do** usar Azul Institucional para acao primaria, foco, icones importantes e estrutura de documento.
-- **Do** usar Vermelho Editorial apenas para risco, exclusao, filtros ativos ou enfase editorial controlada.
+- **Do** usar Vermelho Editorial para filtros ativos ou enfase editorial controlada, reservando o token Perigo para exclusao.
 - **Do** manter o PDF visualmente mais plano que a tela, com tipografia consistente e paginas previsiveis.
 - **Do** escrever rotulos em portugues formal do Brasil, sem abreviacoes desnecessarias.
 - **Do** garantir contraste WCAG AA antes de reutilizar cinzas em labels, placeholders e metadados.
@@ -232,6 +244,6 @@ O card de revisao aparece apos importar Word. Ele concentra miniatura, unidade, 
 - **Don't** fazer a ferramenta parecer um editor amador de redes sociais.
 - **Don't** criar um painel corporativo pesado ou uma pagina experimental.
 - **Don't** usar excesso de efeitos visuais, caixas competindo por atencao ou decoracao sem funcao.
-- **Don't** expandir bordas laterais coloridas grossas como padrao visual; elas ja aparecem no estado atual e devem ser reduzidas em uma futura rodada.
+- **Don't** usar bordas laterais coloridas grossas como padrao visual; prefira borda completa fina, fundo suave ou icone de estado.
 - **Don't** misturar portugues europeu com portugues do Brasil em comandos de interface.
 - **Don't** depender de texto cinza claro para informacoes importantes.
