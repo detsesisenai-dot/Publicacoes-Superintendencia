@@ -788,7 +788,7 @@
             btn.innerHTML = "A guardar..."; 
             btn.disabled = true;
             
-            // Aplica as edições feitas na tela e DESTRÓI a imagem original para poupar a memória do navegador 
+            // Aplica as edições feitas na tela e DESTRÓI a imagem original para poupar a memória do Storage 
             parsedReportsCache.forEach((item) => {
                 item.unit = document.getElementById(`edit-unit-${item.id}`).value; 
                 item.title = semanticTrim(document.getElementById(`edit-title-${item.id}`).value, 200, false); 
