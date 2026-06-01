@@ -600,11 +600,20 @@
         window.clearAllData = function() {
             window.openConfirmModal(
                 "Apagar Todos os Dados",
-                "Deseja apagar todos os relatórios cadastrados no sistema? Esta ação limpará o seu histórico e não poderá ser desfeita.",
+                "Deseja apagar todos os relatórios cadastrados no sistema? Esta ação limpará TODO o seu histórico e não poderá ser desfeita.",
                 () => {
-                    localStorage.removeItem('fiegReportsV32');
+                    // Limpeza profunda: Encontra e elimina todas as versões antigas guardadas na memória do navegador
+                    Object.keys(localStorage).forEach(key => {
+                        if(key.startsWith('fiegReports')) {
+                            localStorage.removeItem(key);
+                        }
+                    });
+                    
                     fiegReportsData = [];
                     applyFilters();
+                    
+                    // Força a atualização da página para garantir que a memória cache RAM foi libertada
+                    window.location.reload();
                 }
             );
         }
