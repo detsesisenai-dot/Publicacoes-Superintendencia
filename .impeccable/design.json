@@ -1,0 +1,215 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-06-01T00:00:00-03:00",
+  "title": "Design System: Informe Executivo Sistema FIEG",
+  "extensions": {
+    "colorMeta": {
+      "primary-blue": {
+        "role": "primary",
+        "displayName": "Azul Institucional",
+        "canonical": "#003A70",
+        "tonalRamp": ["#001326", "#00254A", "#003A70", "#16558D", "#3474AB", "#6398C7", "#9CC2DF", "#D8ECF8"]
+      },
+      "primary-red": {
+        "role": "primary",
+        "displayName": "Vermelho Editorial",
+        "canonical": "#E31937",
+        "tonalRamp": ["#3A050D", "#730A18", "#A91027", "#E31937", "#F04A61", "#F47A8B", "#FAB7C0", "#FDE6EA"]
+      },
+      "surface-page": {
+        "role": "neutral",
+        "displayName": "Fundo Operacional",
+        "canonical": "#F4F6F9",
+        "tonalRamp": ["#171A1F", "#2E333B", "#505865", "#778291", "#A4ACB8", "#C8CED7", "#E4E8EE", "#F4F6F9"]
+      },
+      "surface-white": {
+        "role": "neutral",
+        "displayName": "Superficie Branca",
+        "canonical": "#FFFFFF",
+        "tonalRamp": ["#1A1A1A", "#333333", "#595959", "#808080", "#A6A6A6", "#CCCCCC", "#EDEDED", "#FFFFFF"]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Tinta Executiva",
+        "canonical": "#2B2D42",
+        "tonalRamp": ["#0D0E15", "#191A27", "#2B2D42", "#454966", "#666A8A", "#9295AD", "#C5C7D2", "#ECEEF3"]
+      },
+      "muted-text": {
+        "role": "neutral",
+        "displayName": "Texto Secundario",
+        "canonical": "#8D99AE",
+        "tonalRamp": ["#161A21", "#2D3440", "#4F5A6D", "#707D94", "#8D99AE", "#ADB7C7", "#D0D6DF", "#F1F4F7"]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display Executivo",
+        "purpose": "Titulo principal do informe e capa PDF."
+      },
+      "headline": {
+        "displayName": "Secao Operacional",
+        "purpose": "Titulos de areas como panorama e modais."
+      },
+      "title": {
+        "displayName": "Titulo Editorial",
+        "purpose": "Titulos de materias, etapas de revisao e dialogos."
+      },
+      "body": {
+        "displayName": "Corpo de Trabalho",
+        "purpose": "Campos, botoes, textos de apoio e conteudo editorial."
+      },
+      "label": {
+        "displayName": "Label Denso",
+        "purpose": "Metadados curtos, labels de campo e identificadores."
+      }
+    },
+    "shadows": [
+      {
+        "name": "shadow-low",
+        "value": "Tailwind shadow-sm",
+        "purpose": "Separar superficies brancas do fundo operacional sem criar peso visual."
+      },
+      {
+        "name": "shadow-medium",
+        "value": "Tailwind shadow-md",
+        "purpose": "Destacar botoes primarios e controles sobre imagens."
+      },
+      {
+        "name": "shadow-modal",
+        "value": "Tailwind shadow-2xl",
+        "purpose": "Separar dialogos do overlay escuro."
+      }
+    ],
+    "motion": [
+      {
+        "name": "state-transition",
+        "value": "transition-colors / transition-all, default Tailwind timing",
+        "purpose": "Feedback curto em hover, foco e mudanca de estado."
+      },
+      {
+        "name": "spinner",
+        "value": "animate-spin",
+        "purpose": "Indicar geracao de PDF em andamento."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "sm",
+        "value": "640px"
+      },
+      {
+        "name": "md",
+        "value": "768px"
+      },
+      {
+        "name": "lg",
+        "value": "1024px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Acao principal como gerar PDF, aprovar importacao ou aplicar corte.",
+      "html": "<button class=\"ds-btn-primary\"><span class=\"ds-icon\">PDF</span>Gerar PDF Oficial</button>",
+      "css": ".ds-btn-primary { display: inline-flex; align-items: center; gap: 8px; background: #003A70; color: #FFFFFF; border: 0; border-radius: 8px; padding: 8px 16px; font-family: Montserrat, sans-serif; font-size: 14px; font-weight: 700; line-height: 1.4; cursor: pointer; transition: background-color 160ms ease-out; } .ds-btn-primary:hover { background: #002F5C; } .ds-btn-primary:focus-visible { outline: 3px solid rgba(0,58,112,0.35); outline-offset: 2px; } .ds-icon { font-size: 12px; font-weight: 900; letter-spacing: 0.02em; }"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Acao secundaria como importar relatorio ou limpar filtros.",
+      "html": "<button class=\"ds-btn-secondary\">Importar Relatorio</button>",
+      "css": ".ds-btn-secondary { display: inline-flex; align-items: center; gap: 8px; background: #FFFFFF; color: #003A70; border: 1px solid #003A70; border-radius: 8px; padding: 8px 16px; font-family: Montserrat, sans-serif; font-size: 14px; font-weight: 700; cursor: pointer; transition: background-color 160ms ease-out; } .ds-btn-secondary:hover { background: #F9FAFB; } .ds-btn-secondary:focus-visible { outline: 3px solid rgba(0,58,112,0.35); outline-offset: 2px; }"
+    },
+    {
+      "name": "Danger Button",
+      "kind": "button",
+      "refersTo": "button-danger",
+      "description": "Confirmacao de acao destrutiva, especialmente exclusao.",
+      "html": "<button class=\"ds-btn-danger\">Sim, Apagar</button>",
+      "css": ".ds-btn-danger { display: inline-flex; align-items: center; gap: 8px; background: #E31937; color: #FFFFFF; border: 0; border-radius: 8px; padding: 8px 20px; font-family: Montserrat, sans-serif; font-size: 14px; font-weight: 700; cursor: pointer; transition: background-color 160ms ease-out; } .ds-btn-danger:hover { background: #B91C1C; } .ds-btn-danger:focus-visible { outline: 3px solid rgba(227,25,55,0.35); outline-offset: 2px; }"
+    },
+    {
+      "name": "Input Field",
+      "kind": "input",
+      "refersTo": "input-field",
+      "description": "Campo de filtro ou edicao textual compacto.",
+      "html": "<label class=\"ds-field\"><span>Buscar Unidade</span><input placeholder=\"Ex: Canaa, Jaiara...\" /></label>",
+      "css": ".ds-field { display: grid; gap: 4px; font-family: Montserrat, sans-serif; color: #2B2D42; } .ds-field span { font-size: 12px; font-weight: 700; letter-spacing: 0.025em; text-transform: uppercase; color: #5B667A; } .ds-field input { width: 100%; box-sizing: border-box; border: 1px solid #D1D5DB; background: #F9FAFB; border-radius: 8px; padding: 8px; font: 500 14px/1.4 Montserrat, sans-serif; color: #2B2D42; transition: border-color 160ms ease-out, box-shadow 160ms ease-out, background-color 160ms ease-out; } .ds-field input:hover { background: #FFFFFF; } .ds-field input:focus-visible { outline: 0; border-color: #003A70; box-shadow: 0 0 0 3px rgba(0,58,112,0.18); }"
+    },
+    {
+      "name": "Panel Card",
+      "kind": "card",
+      "refersTo": "card-surface",
+      "description": "Superficie branca para filtros, revisao ou agrupamento de controles.",
+      "html": "<section class=\"ds-card\"><h3>Filtros de Pauta</h3><p>Organize o informe por unidade, eixo ou periodo.</p></section>",
+      "css": ".ds-card { background: #FFFFFF; color: #2B2D42; border: 1px solid #E5E7EB; border-radius: 12px; padding: 20px; font-family: Montserrat, sans-serif; box-shadow: 0 1px 2px rgba(15,23,42,0.06); } .ds-card h3 { margin: 0 0 8px; color: #003A70; font-size: 16px; font-weight: 800; line-height: 1.3; } .ds-card p { margin: 0; color: #5B667A; font-size: 14px; font-weight: 500; line-height: 1.6; }"
+    },
+    {
+      "name": "Editorial Report Card",
+      "kind": "custom",
+      "refersTo": "card-surface",
+      "description": "Preview de materia que vira pagina do PDF.",
+      "html": "<article class=\"ds-report\"><div class=\"ds-unit\">SESI Goias</div><h3>Acao institucional fortalece atendimento nas unidades</h3><div class=\"ds-meta\">01 de junho de 2026 · Educacao e Qualificacao</div><p class=\"ds-lead\">Acao estrategica desenvolvida para ampliar a comunicacao institucional.</p><p>O conteudo apresenta detalhes da iniciativa, resultados e proximos encaminhamentos.</p></article>",
+      "css": ".ds-report { background: #FFFFFF; color: #2B2D42; font-family: Montserrat, sans-serif; padding: 16px 0 24px; border-top: 1px solid #003A70; } .ds-report .ds-unit { margin-bottom: 12px; color: #003A70; font-size: 10px; font-weight: 900; letter-spacing: 0.2em; text-transform: uppercase; } .ds-report h3 { margin: 0 0 16px; font-size: 21px; font-weight: 700; line-height: 1.3; } .ds-report .ds-meta { margin-bottom: 24px; color: #5B667A; font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; } .ds-report .ds-lead { margin: 0 0 20px; background: #F9FAFB; color: #2B2D42; border-left: 4px solid #E31937; padding: 12px 12px 12px 16px; font-size: 16px; font-weight: 600; line-height: 1.5; } .ds-report p { margin: 0 0 16px; color: #1F2937; font-size: 15px; font-weight: 400; line-height: 1.6; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "Mesa Editorial Executiva",
+    "overview": "O sistema atual combina uma mesa de trabalho editorial com acabamento executivo institucional. A interface precisa sustentar tarefas de importacao, revisao, organizacao, recorte de imagem e geracao de PDF sem competir com o conteudo jornalistico.",
+    "keyCharacteristics": [
+      "Interface de produto, nao landing page.",
+      "Paleta institucional restrita com azul como cor de acao e vermelho como cor de enfase ou risco.",
+      "Componentes densos, escaneaveis e voltados a revisao editorial.",
+      "PDF final mais plano e normatizado que a interface web.",
+      "Linguagem visual moderna, limpa e sem efeitos decorativos desnecessarios."
+    ],
+    "rules": [
+      {
+        "name": "The Institutional Accent Rule",
+        "body": "Azul e vermelho devem aparecer como acao, identidade, enfase ou risco. Eles nao devem virar decoracao de fundo.",
+        "section": "colors"
+      },
+      {
+        "name": "The Contrast Debt Rule",
+        "body": "O cinza secundario atual e parte do sistema existente, mas nao deve ser expandido sem correcao de contraste para WCAG AA.",
+        "section": "colors"
+      },
+      {
+        "name": "The Editorial Reading Rule",
+        "body": "Campos de titulo, lead e corpo precisam favorecer leitura precisa. Texto de apoio pode ser compacto, mas conteudo editorial nao deve parecer comprimido.",
+        "section": "typography"
+      },
+      {
+        "name": "The One Family Rule",
+        "body": "Enquanto o PDF depender de Montserrat, a interface tambem deve usar Montserrat para manter continuidade entre tela e documento final.",
+        "section": "typography"
+      },
+      {
+        "name": "The Flat PDF Rule",
+        "body": "Qualquer elevacao visual da interface deve desaparecer no PDF final. O documento exportado precisa parecer normativo, nao uma captura de tela.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do preservar a linguagem de produto interno: comandos claros, estados explicitos e telas voltadas a revisao editorial.",
+      "Do usar Azul Institucional para acao primaria, foco, icones importantes e estrutura de documento.",
+      "Do usar Vermelho Editorial apenas para risco, exclusao, filtros ativos ou enfase editorial controlada.",
+      "Do manter o PDF visualmente mais plano que a tela, com tipografia consistente e paginas previsiveis.",
+      "Do escrever rotulos em portugues formal do Brasil, sem abreviacoes desnecessarias.",
+      "Do garantir contraste WCAG AA antes de reutilizar cinzas em labels, placeholders e metadados."
+    ],
+    "donts": [
+      "Don't fazer a interface parecer uma peca publicitaria chamativa.",
+      "Don't fazer a ferramenta parecer um editor amador de redes sociais.",
+      "Don't criar um painel corporativo pesado ou uma pagina experimental.",
+      "Don't usar excesso de efeitos visuais, caixas competindo por atencao ou decoracao sem funcao.",
+      "Don't expandir bordas laterais coloridas grossas como padrao visual; elas ja aparecem no estado atual e devem ser reduzidas em uma futura rodada.",
+      "Don't misturar portugues europeu com portugues do Brasil em comandos de interface.",
+      "Don't depender de texto cinza claro para informacoes importantes."
+    ]
+  }
+}
