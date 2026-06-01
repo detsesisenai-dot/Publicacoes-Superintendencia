@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Informe Executivo | Sistema FIEG</title>
     
-    <!-- Google Fonts: Montserrat EXCLUSIVA -->
+    <!-- Google Fonts: Montserrat EXCLUSIVA para todo o documento -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -47,62 +47,72 @@
         body { background-color: #F4F6F9; font-family: 'Montserrat', sans-serif; box-sizing: border-box; }
         .hide-on-pdf { display: block; }
         
-        /* --- MODO PDF EXECUTIVO (Fidelidade Absoluta 1:1) --- */
-        body.pdf-mode { 
-            background-color: #FFFFFF !important; 
-            margin: 0 !important; 
-            padding: 0 !important; 
-            overflow: visible !important;
-        }
+        /* --- MODO PDF EXECUTIVO NORMATIZADO E BLINDADO --- */
+        .pdf-mode { overflow: visible !important; width: 1000px !important; min-width: 1000px !important; }
+        .pdf-mode body, .pdf-mode html { width: 1000px !important; min-width: 1000px !important; background-color: #FFFFFF !important; overflow: visible !important;}
+        .pdf-mode .hide-on-pdf { display: none !important; }
         
-        body.pdf-mode .hide-on-pdf { display: none !important; }
-        body.pdf-mode .shadow-sm, body.pdf-mode .shadow-md { box-shadow: none !important; }
+        /* Remove sombras para renderização plana */
+        .pdf-mode .shadow-sm, .pdf-mode .shadow-md { box-shadow: none !important; border: none !important; border-radius: 0 !important; }
         
-        /* Container Base para Captura a 900px fixos */
-        body.pdf-mode #executive-dashboard {
-            width: 900px !important;
-            max-width: 900px !important;
-            padding: 0 !important; 
-            margin: 0 auto !important; 
-            background: #FFFFFF !important;
-            display: block !important;
-        }
-        
-        body.pdf-mode #news-feed { 
+        /* O Container recebe margens internas em vez de margens no jsPDF para evitar fatiamento lateral (Efeito Guilhotina) */
+        .pdf-mode #executive-dashboard {
+            background-image: none !important; 
+            padding: 0 30px !important; 
+            margin: 0 auto !important;
+            box-sizing: border-box !important;
             width: 100% !important;
+        }
+        
+        .pdf-mode #news-feed { 
             display: block !important; 
-            margin: 0 !important;
-            padding: 0 !important;
+            width: 100% !important;
         }
 
-        /* Garantia de que cada card ocupa uma página inteira orgânica */
-        body.pdf-mode .pdf-item { 
+        /* O SEGREDO DA NORMATIZAÇÃO: 1 PÁGINA = 1 NOTÍCIA (Sem cortes) */
+        .pdf-mode .pdf-item { 
             display: block !important; 
             width: 100% !important;
-            height: auto !important; 
-            margin: 0 !important; 
+            margin-bottom: 0 !important; 
             background-color: #FFFFFF !important;
             border: none !important; 
-            padding: 10px 0 !important; 
-            box-sizing: border-box !important;
-            
+            padding-bottom: 0 !important;
             page-break-after: always !important; 
             break-after: page !important;
             page-break-inside: avoid !important;
             break-inside: avoid !important;
         }
 
-        /* Impede folha em branco vazia no fim do PDF */
-        body.pdf-mode .pdf-item:last-child {
-            page-break-after: auto !important;
-            break-after: auto !important;
+        /* CAIXA DE IMAGEM BLINDADA: Altura cravada em 280px para sobrar espaço ao texto de 1000 caracteres */
+        .pdf-mode .news-image-container {
+            height: 280px !important; 
+            width: 100% !important; 
+            max-width: 1000px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            margin-bottom: 24px !important;
+            overflow: hidden !important; 
+            border-radius: 8px !important;
+            background-color: #F4F6F9 !important;
         }
+        .pdf-mode .news-image {
+            height: 100% !important;
+            width: 100% !important;
+            object-fit: cover !important; 
+            display: block !important;
+            object-position: center !important;
+        }
+
+        .pdf-mode .exclude-from-pdf { display: none !important; height: 0 !important; margin: 0 !important; padding: 0 !important; overflow: hidden !important; }
+        .pdf-mode .header-logos { display: none !important; }
+        .pdf-mode #pdf-header-cover { display: block !important; }
         
-        body.pdf-mode .exclude-from-pdf { display: none !important; height: 0 !important; margin: 0 !important; padding: 0 !important; overflow: hidden !important; }
-        
+        /* Custom Scrollbar */
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: #f1f1f1; }
         ::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 4px; }
+        
         #pdf-loading { backdrop-filter: blur(5px); }
 
         /* Estilo do modal de Crop */
@@ -118,7 +128,7 @@
     <div id="pdf-loading" class="fixed inset-0 bg-white bg-opacity-90 z-[999] hidden flex-col items-center justify-center">
         <i class="ph ph-spinner animate-spin text-6xl text-brand-blue mb-4"></i>
         <h2 class="text-2xl font-bold text-brand-dark">A gerar Relatório Oficial...</h2>
-        <p class="text-brand-gray mt-2 font-semibold italic" id="pdf-loading-text">Processando fidelidade visual 1:1 e desenhando cabeçalhos.</p>
+        <p class="text-brand-gray mt-2 font-semibold italic" id="pdf-loading-text">Validando métricas, tipografia e blindando páginas.</p>
     </div>
 
     <!-- Container Principal -->
@@ -138,6 +148,10 @@
             </div>
             
             <div class="flex flex-col items-end gap-4 mt-4 md:mt-0">
+                <div class="header-logos">
+                    <img src="https://i.postimg.cc/HWKTMyKs/sistema-fieg-02.png" crossorigin="anonymous" alt="Sistema FIEG" style="height: 36px; width: auto; object-fit: contain; display: block;">
+                </div>
+                
                 <div class="flex gap-3 mt-2">
                     <button onclick="openModal()" class="flex items-center gap-2 bg-white border border-brand-blue text-brand-blue font-semibold py-2 px-4 rounded-lg shadow-sm hover:bg-gray-50 transition-colors">
                         <i class="ph ph-magic-wand text-xl"></i>
@@ -150,6 +164,12 @@
                 </div>
             </div>
         </header>
+
+        <!-- Capa Invisível para PDF -->
+        <div id="pdf-header-cover" class="hidden mb-12 border-b-2 border-brand-blue pb-4">
+            <h1 class="text-3xl font-black text-brand-blue tracking-tight mt-4" style="font-family: 'Montserrat', sans-serif;">INFORME EXECUTIVO</h1>
+            <p class="text-brand-dark font-bold text-sm uppercase mt-1">Sistema FIEG <span id="pdf-date-subtitle"></span></p>
+        </div>
 
         <!-- Filtros em Tempo Real -->
         <div class="bg-white p-5 rounded-xl shadow-sm mb-10 flex flex-col gap-4 border border-gray-100 hide-on-pdf" id="filters-container">
@@ -195,7 +215,7 @@
             </div>
         </div>
 
-        <h2 class="text-2xl font-black text-brand-dark mb-8 border-b-2 border-brand-red pb-2 uppercase tracking-wide hide-on-pdf text-center mx-auto">Panorama das Unidades</h2>
+        <h2 class="text-2xl font-black text-brand-dark mb-8 border-b-2 border-brand-red pb-2 uppercase tracking-wide hide-on-pdf text-center mx-auto" style="font-family: 'Montserrat', sans-serif;">Panorama das Unidades</h2>
         
         <div id="news-feed" class="flex flex-col w-full">
             <!-- Pautas injetadas pelo JS -->
@@ -221,7 +241,7 @@
                         <input type="file" id="word-upload" accept=".docx" multiple class="hidden" onchange="processWordFiles(event)">
                         <i class="ph-fill ph-file-doc text-7xl text-brand-blue mb-4"></i>
                         <h4 class="text-xl font-bold text-brand-blue" id="upload-feedback">Selecionar ficheiros Word (.docx)</h4>
-                        <p class="text-sm text-gray-500 mt-2">A I.A. extrairá o conteúdo para você reajustar visualmente se precisar.</p>
+                        <p class="text-sm text-gray-500 mt-2">A I.A. fará a limpeza aplicando as Normas Editoriais Semânticas.</p>
                         <ul class="text-xs text-brand-gray mt-4 list-disc text-left max-w-xs mx-auto">
                             <li>Títulos: máx. 120 caracteres</li>
                             <li>Sínteses (Lead): máx. 250 caracteres</li>
@@ -234,7 +254,7 @@
                 <div id="stage-review" class="hidden">
                     <div class="flex justify-between items-center mb-4 bg-white p-4 rounded-xl shadow-sm border border-gray-200">
                         <h4 class="text-lg font-bold text-brand-dark"><span id="review-count">0</span> Pautas prontas para revisão.</h4>
-                        <button onclick="saveAllParsedReports(event)" class="bg-brand-blue text-white px-6 py-2 rounded-lg font-bold shadow-md hover:bg-blue-900 transition flex items-center gap-2">
+                        <button onclick="saveAllParsedReports()" class="bg-brand-blue text-white px-6 py-2 rounded-lg font-bold shadow-md hover:bg-blue-900 transition flex items-center gap-2">
                             <i class="ph-fill ph-check-circle"></i> Aprovar e Publicar
                         </button>
                     </div>
@@ -246,7 +266,7 @@
         </div>
     </div>
 
-    <!-- Modal do Cropper -->
+    <!-- Modal do Cropper (Ferramenta de Enquadramento) -->
     <div id="crop-modal" class="fixed inset-0 bg-brand-dark bg-opacity-95 z-[2000] hidden flex items-center justify-center p-4">
         <div class="bg-white rounded-xl shadow-2xl w-full max-w-5xl flex flex-col overflow-hidden">
             <div class="p-4 border-b border-gray-200 flex justify-between items-center bg-gray-50">
@@ -256,11 +276,12 @@
                 <button onclick="closeCropModal()" class="text-gray-500 hover:text-brand-red transition"><i class="ph-bold ph-x text-xl"></i></button>
             </div>
             <div class="p-6 bg-gray-200 flex justify-center items-center h-[60vh] max-h-[600px] overflow-hidden">
+                <!-- Imagem Target do Cropper -->
                 <img id="crop-image-target" src="" style="display: block; max-width: 100%; max-height: 100%;">
             </div>
             <div class="p-4 border-t border-gray-200 flex justify-between items-center bg-white">
                 <p class="text-sm font-semibold text-brand-gray hidden md:block">
-                    <i class="ph-fill ph-info"></i> Arraste a imagem ou redimensione a área de corte. A proporção está travada (1000x500).
+                    <i class="ph-fill ph-info"></i> Arraste a imagem ou redimensione a área de corte. A proporção está travada para o PDF oficial (1000x500).
                 </p>
                 <div class="flex gap-3">
                     <button onclick="closeCropModal()" class="px-5 py-2 bg-gray-200 text-gray-700 font-bold rounded-lg hover:bg-gray-300 transition">Cancelar</button>
@@ -306,15 +327,15 @@
                 </div>
                 <div>
                     <label class="flex justify-between text-[10px] font-bold text-brand-gray uppercase mb-1"><span>Manchete Executiva (Título Curto)</span> <span id="count-title" class="text-brand-red"></span></label>
-                    <input type="text" id="edit-single-title" maxlength="120" oninput="document.getElementById('count-title').innerText = this.value.length + '/120';" class="w-full border border-gray-300 rounded p-2 focus:outline-none focus:ring-2 focus:ring-brand-blue font-bold text-lg text-brand-dark">
+                    <input type="text" id="edit-single-title" maxlength="120" oninput="document.getElementById('count-title').innerText = this.value.length + '/120';" class="w-full border border-gray-300 rounded p-2 focus:outline-none focus:ring-2 focus:ring-brand-blue font-bold text-lg text-brand-dark" style="font-family: 'Montserrat', sans-serif;">
                 </div>
                 <div>
                     <label class="flex justify-between text-[10px] font-bold text-brand-gray uppercase mb-1"><span>Síntese Estratégica (Lead)</span> <span id="count-lead" class="text-brand-red"></span></label>
-                    <textarea id="edit-single-lead" rows="2" maxlength="250" oninput="document.getElementById('count-lead').innerText = this.value.length + '/250';" class="w-full border border-gray-300 rounded p-3 focus:outline-none focus:ring-2 focus:ring-brand-blue text-sm text-brand-dark font-semibold leading-relaxed bg-gray-50 border-l-[3px] border-l-brand-red"></textarea>
+                    <textarea id="edit-single-lead" rows="2" maxlength="250" oninput="document.getElementById('count-lead').innerText = this.value.length + '/250';" class="w-full border border-gray-300 rounded p-3 focus:outline-none focus:ring-2 focus:ring-brand-blue text-sm text-brand-dark font-semibold leading-relaxed bg-gray-50 border-l-4 border-l-brand-red" style="font-family: 'Montserrat', sans-serif;"></textarea>
                 </div>
                 <div>
                     <label class="flex justify-between text-[10px] font-bold text-brand-gray uppercase mb-1"><span>Corpo Institucional (Detalhes)</span> <span id="count-content" class="text-brand-red"></span></label>
-                    <textarea id="edit-single-content" rows="6" maxlength="1000" oninput="document.getElementById('count-content').innerText = this.value.length + '/1000';" class="w-full border border-gray-300 rounded p-3 focus:outline-none text-gray-800 leading-relaxed resize-none"></textarea>
+                    <textarea id="edit-single-content" rows="6" maxlength="1000" oninput="document.getElementById('count-content').innerText = this.value.length + '/1000';" class="w-full border border-gray-300 rounded p-3 focus:outline-none text-gray-800 leading-relaxed resize-none" style="font-family: 'Montserrat', sans-serif;"></textarea>
                 </div>
             </div>
             <div class="p-4 border-t border-gray-200 bg-gray-50 flex justify-end gap-3">
@@ -350,20 +371,14 @@
     </div>
 
     <script>
-        // --- ESTADO INICIAL ---
-        var fiegReportsData = [];
+        // --- PREVENÇÃO DE ERROS DE DECLARAÇÃO E MEMÓRIA ---
+        var reports = [];
         try {
-            fiegReportsData = JSON.parse(localStorage.getItem('fiegReportsV32')) || [];
-        } catch (e) {
-            console.warn("⚠️ Banco de dados local corrompido ou inacessível. Iniciando ambiente limpo.");
-            fiegReportsData = [];
+            reports = JSON.parse(localStorage.getItem('fiegReportsV32')) || [];
+        } catch(e) {
+            reports = [];
         }
-        
-        var fiegParsedCache = []; 
-        var fiegConfirmAction = null;
-        var fiegCropper = null;
-        var fiegCropId = null;
-        var fiegIsEditingCache = false;
+        var parsedReportsCache = []; 
 
         document.getElementById('current-date-display').innerText = new Intl.DateTimeFormat('pt-BR', { dateStyle: 'long' }).format(new Date());
 
@@ -372,28 +387,34 @@
         }
 
         // --- SISTEMA DE MODAL DE CONFIRMAÇÃO ---
+        var pendingConfirmAction = null;
+
         window.openConfirmModal = function(title, text, callback) {
             document.getElementById('confirm-modal-title').innerHTML = `<i class="ph-fill ph-warning-circle"></i> ${title}`;
             document.getElementById('confirm-modal-text').innerText = text;
-            fiegConfirmAction = callback;
+            pendingConfirmAction = callback;
             document.getElementById('custom-confirm-modal').classList.remove('hidden');
         }
 
         window.closeConfirmModal = function() {
             document.getElementById('custom-confirm-modal').classList.add('hidden');
-            fiegConfirmAction = null;
+            pendingConfirmAction = null;
         }
 
         window.executeConfirmAction = function() {
-            if(fiegConfirmAction) fiegConfirmAction();
+            if(pendingConfirmAction) pendingConfirmAction();
             window.closeConfirmModal();
         }
 
-        // --- LÓGICA DO CROPPER ---
+        // --- LÓGICA DO CROPPER (ENQUADRAMENTO) ---
+        var currentCropper = null;
+        var currentCropId = null;
+        var isEditingFromCache = false;
+
         window.openCropModal = function(id, fromCache = false) {
-            fiegCropId = id;
-            fiegIsEditingCache = fromCache;
-            let item = fromCache ? fiegParsedCache.find(r => r.id === id) : fiegReportsData.find(r => r.id === id);
+            currentCropId = id;
+            isEditingFromCache = fromCache;
+            let item = fromCache ? parsedReportsCache.find(r => r.id === id) : reports.find(r => r.id === id);
             
             if (!item || !item.originalImage) {
                 alert("A imagem original foi descartada para otimizar o espaço do seu navegador.\nPara reenquadrar, por favor exclua esta matéria e importe o arquivo Word novamente.");
@@ -405,13 +426,14 @@
             
             document.getElementById('crop-modal').classList.remove('hidden');
 
-            if (fiegCropper) {
-                fiegCropper.destroy();
+            if (currentCropper) {
+                currentCropper.destroy();
             }
 
+            // Inicia o Cropper.js travado na proporção exata 2:1 para o PDF
             setTimeout(() => {
-                fiegCropper = new Cropper(imgTarget, {
-                    aspectRatio: 2 / 1, 
+                currentCropper = new Cropper(imgTarget, {
+                    aspectRatio: 2 / 1, // Widescreen Rigoroso para o PDF
                     viewMode: 1, 
                     dragMode: 'move',
                     autoCropArea: 1,
@@ -428,16 +450,16 @@
 
         window.closeCropModal = function() {
             document.getElementById('crop-modal').classList.add('hidden');
-            if (fiegCropper) {
-                fiegCropper.destroy();
-                fiegCropper = null;
+            if (currentCropper) {
+                currentCropper.destroy();
+                currentCropper = null;
             }
         }
 
         window.applyCrop = function() {
-            if (!fiegCropper) return;
+            if (!currentCropper) return;
             
-            const canvas = fiegCropper.getCroppedCanvas({
+            const canvas = currentCropper.getCroppedCanvas({
                 width: 1000,
                 height: 500,
                 imageSmoothingEnabled: true,
@@ -446,18 +468,18 @@
             
             const newImageBase64 = canvas.toDataURL('image/jpeg', 0.90);
             
-            if (fiegIsEditingCache) {
-                let item = fiegParsedCache.find(r => r.id === fiegCropId);
+            if (isEditingFromCache) {
+                let item = parsedReportsCache.find(r => r.id === currentCropId);
                 if (item) {
                     item.image = newImageBase64;
                     renderReviewCards();
                 }
             } else {
-                let item = fiegReportsData.find(r => r.id === fiegCropId);
+                let item = reports.find(r => r.id === currentCropId);
                 if (item) {
                     item.image = newImageBase64;
                     try {
-                        localStorage.setItem('fiegReportsV32', JSON.stringify(fiegReportsData));
+                        localStorage.setItem('fiegReportsV32', JSON.stringify(reports));
                     } catch(e) {
                         alert("⚠️ O recorte foi aplicado na tela, mas o limite de memória do navegador não permitiu salvar as alterações permanentemente.");
                     }
@@ -468,12 +490,14 @@
             closeCropModal();
         }
 
+        // Processamento Mestre da Imagem na extração
         function processImageForStorage(base64Str) {
             return new Promise((resolve) => {
                 if(!base64Str) { resolve({ original: null, cropped: null }); return; }
                 const img = new Image(); 
                 img.src = base64Str;
                 img.onload = () => { 
+                    // Guardar a Original Comprimida (para o modo de Edição/Cropper)
                     const origCanvas = document.createElement('canvas');
                     let oW = img.width;
                     let oH = img.height;
@@ -486,6 +510,7 @@
                     origCtx.drawImage(img, 0, 0, oW, oH);
                     const originalImage = origCanvas.toDataURL('image/jpeg', 0.85);
 
+                    // Gerar Recorte Automático (1000x500) Default
                     const cropCanvas = document.createElement('canvas'); 
                     cropCanvas.width = 1000; 
                     cropCanvas.height = 500; 
@@ -504,14 +529,22 @@
             });
         }
 
-        // --- MOTOR DE REDAÇÃO ESPECIALISTA ---
+        // --- MOTOR DE REDAÇÃO ESPECIALISTA (Corte Semântico Seguro) ---
         function semanticTrim(text, maxLength, isBody = false) {
             if (!text || text.length <= maxLength) return text;
+            
             let trimmed = text.substring(0, maxLength);
             let lastSpace = trimmed.lastIndexOf(' ');
-            if (lastSpace > 0) { trimmed = trimmed.substring(0, lastSpace); }
+            
+            if (lastSpace > 0) {
+                trimmed = trimmed.substring(0, lastSpace);
+            }
+            
             trimmed = trimmed.replace(/[\s,;:/\-]+$/, '');
-            if (isBody && !trimmed.endsWith('.')) { trimmed += '.'; }
+            
+            if (isBody && !trimmed.endsWith('.')) {
+                trimmed += '.';
+            }
             return trimmed;
         }
 
@@ -519,6 +552,7 @@
             if(!text) return "";
             let clean = text.replace(/<[^>]*>?/gm, ''); 
             clean = clean.replace(/\*/g, '');
+            // Limpa as datas extensas do WhatsApp
             clean = clean.replace(/^\s*\d{1,2}\s+de\s+[a-zA-ZçÇ]+\s*(de\s*\d{4})?\s*[-–]\s*/i, '');
             clean = clean.replace(/^(?:Entre\s+(?:os\s+)?dias\s+|De\s+)?\d{1,2}(?:\s*(?:a|e|até|a)\s*\d{1,2})?\s+de\s+[a-zA-ZçÇ]+(?:\s+de\s+\d{4})?\s*(?:[-–,.:])?\s*/i, '');
             
@@ -537,7 +571,11 @@
                 [/\bNossos alunos\b/gi, 'Os alunos'],
                 [/\bNossa equipe\b/gi, 'A equipe institucional']
             ];
-            replacements.forEach(([pattern, replacement]) => { clean = clean.replace(pattern, replacement); });
+
+            replacements.forEach(([pattern, replacement]) => {
+                clean = clean.replace(pattern, replacement);
+            });
+
             clean = clean.replace(/\s{2,}/g, ' ');
             clean = clean.trim();
             if(clean.length > 0) clean = clean.charAt(0).toUpperCase() + clean.slice(1);
@@ -547,9 +585,17 @@
         function generateTitle(firstSentence) {
             let title = firstSentence;
             title = title.replace(/^(A unidade realizou|A unidade promoveu|Representantes da unidade participaram de|Representantes da unidade participaram da|A instituição promoveu|Foi dado início ao|Foi dado início à|As atividades foram iniciadas com|A unidade celebrou a|A unidade celebrou o|A unidade recebeu|A comitiva institucional foi recebida|A equipe acompanhou a|A equipe acompanhou o|A unidade encerrou a|O Departamento Nacional do SESI realizou|A Coordenação Regional de Educação.*?sediou uma)\s*(o|a|os|as|um|uma)?\s*/i, '');
+            
+            // Isola o assunto principal
             let coreParts = title.split(/(?:\s+com o objetivo|\s+durante|\s+visando|\s+que teve|\s+realizada em|\s+realizado em|\s+com a finalidade|\s+para promover)/i);
             title = coreParts[0].trim();
-            title = semanticTrim(title, 120, false);
+            title = title.replace(/[,:;.]\s*$/, '');
+            if(title.length > 0) title = title.charAt(0).toUpperCase() + title.slice(1);
+            
+            // NORMATIZAÇÃO 120 Caracteres
+            if (title.length > 120) { 
+                title = semanticTrim(title, 120, false);
+            }
             return title;
         }
 
@@ -564,6 +610,7 @@
                     break;
                 }
             }
+            
             let lead = '';
             if (objective) {
                 objective = objective.charAt(0).toLowerCase() + objective.slice(1);
@@ -571,7 +618,10 @@
             } else {
                 lead = `Destaque institucional: ${firstSentence.split('.')[0].trim()}.`;
             }
-            return semanticTrim(lead, 250, true);
+            
+            // NORMATIZAÇÃO 250 Caracteres
+            if(lead.length > 250) { lead = semanticTrim(lead, 250, true); }
+            return lead;
         }
 
         function extractDate(text) {
@@ -600,20 +650,11 @@
         window.clearAllData = function() {
             window.openConfirmModal(
                 "Apagar Todos os Dados",
-                "Deseja apagar todos os relatórios cadastrados no sistema? Esta ação limpará TODO o seu histórico e não poderá ser desfeita.",
+                "Deseja apagar todos os relatórios cadastrados no sistema? Esta ação limpará o seu histórico e não poderá ser desfeita.",
                 () => {
-                    // Limpeza profunda: Encontra e elimina todas as versões antigas guardadas na memória do navegador
-                    Object.keys(localStorage).forEach(key => {
-                        if(key.startsWith('fiegReports')) {
-                            localStorage.removeItem(key);
-                        }
-                    });
-                    
-                    fiegReportsData = [];
+                    localStorage.removeItem('fiegReportsV32');
+                    reports = [];
                     applyFilters();
-                    
-                    // Força a atualização da página para garantir que a memória cache RAM foi libertada
-                    window.location.reload();
                 }
             );
         }
@@ -622,8 +663,8 @@
         async function processWordFiles(event) {
             const files = event.target.files;
             if (!files || files.length === 0) return;
-            document.getElementById('upload-feedback').innerText = "A extrair dados e otimizar imagens...";
-            fiegParsedCache = [];
+            document.getElementById('upload-feedback').innerText = "A processar, normatizar e aplicar corte semântico...";
+            parsedReportsCache = [];
             for (let i = 0; i < files.length; i++) {
                 const arrayBuffer = await files[i].arrayBuffer();
                 const result = await mammoth.convertToHtml({arrayBuffer: arrayBuffer});
@@ -649,11 +690,15 @@
                                 let bodyArr = [];
                                 if(restOfPar) bodyArr.push(restOfPar + (restOfPar.endsWith('.') ? '' : '.'));
                                 for (let j = 1; j < paragraphs.length; j++) bodyArr.push(paragraphs[j]);
-                                currentAction.content = semanticTrim(bodyArr.join('\n\n'), 1000, true);
+                                
+                                // NORMATIZAÇÃO 1000
+                                let fullBody = bodyArr.join('\n\n');
+                                if(fullBody.length > 1000) fullBody = semanticTrim(fullBody, 1000, true);
+                                currentAction.content = fullBody;
                             }
                             if(!currentAction.type) currentAction.type = inferCategory(rawAccumulatedContent);
                             if(!currentAction.date) currentAction.date = new Date().toISOString().split('T')[0];
-                            fiegParsedCache.push(currentAction);
+                            parsedReportsCache.push(currentAction);
                         }
                         currentAction = { id: 'rep_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5), unit: rawText.replace(/\*/g, '').trim(), title: '', lead: '', date: '', type: '', content: '', image: null, rawImage: null };
                         rawAccumulatedContent = ""; 
@@ -677,16 +722,20 @@
                         let bodyArr = [];
                         if(restOfPar) bodyArr.push(restOfPar + (restOfPar.endsWith('.') ? '' : '.'));
                         for (let j = 1; j < paragraphs.length; j++) bodyArr.push(paragraphs[j]);
-                        currentAction.content = semanticTrim(bodyArr.join('\n\n'), 1000, true);
+                        
+                        let fullBody = bodyArr.join('\n\n');
+                        if(fullBody.length > 1000) fullBody = semanticTrim(fullBody, 1000, true);
+                        currentAction.content = fullBody;
                     }
                     if(!currentAction.type) currentAction.type = inferCategory(rawAccumulatedContent);
                     if(!currentAction.date) currentAction.date = new Date().toISOString().split('T')[0];
-                    fiegParsedCache.push(currentAction);
+                    parsedReportsCache.push(currentAction);
                 }
             }
 
+            // Otimiza as imagens e gera os crops matemáticos assincronamente
             document.getElementById('upload-feedback').innerText = "A aplicar enquadramentos primários...";
-            const imagePromises = fiegParsedCache.map(async (item) => {
+            const imagePromises = parsedReportsCache.map(async (item) => {
                 if (item.rawImage) {
                     const processed = await processImageForStorage(item.rawImage);
                     item.originalImage = processed.original;
@@ -703,17 +752,16 @@
         function renderReviewCards() {
             document.getElementById('stage-upload').classList.add('hidden');
             document.getElementById('stage-review').classList.remove('hidden');
-            document.getElementById('review-count').innerText = fiegParsedCache.length;
+            document.getElementById('review-count').innerText = parsedReportsCache.length;
             const container = document.getElementById('parsed-cards-container');
             container.innerHTML = '';
-            fiegParsedCache.forEach((item) => {
+            parsedReportsCache.forEach((item) => {
                 const card = document.createElement('div');
                 card.id = `parsed-card-${item.id}`;
-                card.className = 'bg-white p-5 rounded-xl shadow-sm border border-gray-200 flex flex-col relative group';
+                card.className = 'bg-white p-5 rounded-xl shadow-sm border border-gray-200 flex flex-col relative group font-sans';
                 
                 let imgThumb = item.image ? `<div class="w-full h-32 bg-gray-50 flex items-center justify-center rounded-lg mb-3 overflow-hidden relative">
                     <img src="${item.image}" class="max-w-full max-h-full object-cover">
-                    <!-- NOVO BOTÃO: Enquadrar na Revisão -->
                     <button onclick="openCropModal('${item.id}', true)" class="absolute top-2 left-2 bg-white text-brand-blue p-2 rounded-full hover:bg-brand-blue hover:text-white transition shadow-md border border-gray-200" title="Ajustar Enquadramento Fotográfico"><i class="ph-bold ph-crop"></i></button>
                     </div>` : `<div class="w-full h-32 bg-gray-100 flex items-center justify-center rounded-lg mb-3"><i class="ph ph-image text-4xl text-gray-300"></i></div>`;
                 
@@ -724,9 +772,9 @@
                         <div><label class="text-[10px] font-bold text-gray-400 uppercase">Unidade</label><input type="text" value="${item.unit}" id="edit-unit-${item.id}" class="w-full font-bold text-sm text-brand-blue border-b border-gray-300 focus:outline-none bg-transparent uppercase"></div>
                         <div><label class="text-[10px] font-bold text-gray-400 uppercase">Data</label><input type="date" value="${item.date}" id="edit-date-${item.id}" class="w-full text-xs border border-gray-300 rounded p-1 focus:outline-none font-bold text-brand-dark"></div>
                     </div>
-                    <div class="mb-2"><label class="flex justify-between text-[10px] font-bold text-gray-400 uppercase"><span>Manchete</span> <span>${item.title.length}/120</span></label><textarea id="edit-title-${item.id}" maxlength="120" rows="2" class="w-full text-sm font-bold border border-gray-300 rounded p-1.5 focus:outline-none bg-gray-50 resize-none text-brand-dark">${item.title}</textarea></div>
-                    <div class="mb-2"><label class="flex justify-between text-[10px] font-bold text-gray-400 uppercase"><span>Síntese (Lead)</span> <span>${item.lead.length}/250</span></label><textarea id="edit-lead-${item.id}" maxlength="250" rows="3" class="w-full text-xs font-semibold text-brand-dark border-l-[3px] border-brand-red border-y border-r border-gray-300 rounded-r p-2 focus:outline-none bg-red-50 resize-none">${item.lead}</textarea></div>
-                    <div class="mb-2"><label class="flex justify-between text-[10px] font-bold text-gray-400 uppercase"><span>Detalhes Institucionais</span> <span>${item.content.length}/1000</span></label><textarea id="edit-content-${item.id}" maxlength="1000" rows="3" class="w-full text-xs border border-gray-300 rounded p-2 focus:outline-none text-gray-700 leading-relaxed resize-none">${item.content}</textarea></div>
+                    <div class="mb-2"><label class="flex justify-between text-[10px] font-bold text-gray-400 uppercase"><span>Manchete</span> <span>${item.title.length}/120</span></label><textarea id="edit-title-${item.id}" maxlength="120" rows="2" class="w-full text-sm font-bold border border-gray-300 rounded p-1.5 focus:outline-none bg-gray-50 resize-none text-brand-dark" style="font-family: 'Montserrat', sans-serif;">${item.title}</textarea></div>
+                    <div class="mb-2"><label class="flex justify-between text-[10px] font-bold text-gray-400 uppercase"><span>Síntese (Lead)</span> <span>${item.lead.length}/250</span></label><textarea id="edit-lead-${item.id}" maxlength="250" rows="3" class="w-full text-xs font-semibold text-brand-dark border-l-[3px] border-brand-red border-y border-r border-gray-300 rounded-r p-2 focus:outline-none bg-red-50 resize-none" style="font-family: 'Montserrat', sans-serif;">${item.lead}</textarea></div>
+                    <div class="mb-2"><label class="flex justify-between text-[10px] font-bold text-gray-400 uppercase"><span>Detalhes Institucionais</span> <span>${item.content.length}/1000</span></label><textarea id="edit-content-${item.id}" maxlength="1000" rows="3" class="w-full text-xs border border-gray-300 rounded p-2 focus:outline-none text-gray-700 leading-relaxed resize-none" style="font-family: 'Montserrat', sans-serif;">${item.content}</textarea></div>
                     <div><label class="text-[10px] font-bold text-gray-400 uppercase">Eixo</label><select id="edit-type-${item.id}" class="w-full text-xs border border-gray-300 rounded p-1.5 focus:outline-none bg-blue-50 text-brand-blue font-semibold"><option value="Educação e Qualificação" ${item.type === 'Educação e Qualificação' ? 'selected' : ''}>Educação e Qualificação</option><option value="Saúde e Segurança" ${item.type === 'Saúde e Segurança' ? 'selected' : ''}>Saúde e Segurança</option><option value="Indústria 4.0 e Inovação" ${item.type === 'Indústria 4.0 e Inovação' ? 'selected' : ''}>Indústria 4.0 e Inovação</option><option value="Relações Institucionais" ${item.type === 'Relações Institucionais' ? 'selected' : ''}>Relações Institucionais</option></select></div>
                 `;
                 container.appendChild(card);
@@ -734,40 +782,34 @@
         }
 
         window.removeParsedCard = function(id) {
-            fiegParsedCache = fiegParsedCache.filter(item => item.id !== id);
+            parsedReportsCache = parsedReportsCache.filter(item => item.id !== id);
             const cardElement = document.getElementById(`parsed-card-${id}`);
             if (cardElement) cardElement.remove();
-            document.getElementById('review-count').innerText = fiegParsedCache.length;
+            document.getElementById('review-count').innerText = parsedReportsCache.length;
         }
 
-        // --- SALVAMENTO E PROTEÇÃO DE MEMÓRIA ---
         window.saveAllParsedReports = async function(event) {
             const btn = event ? event.currentTarget : document.querySelector('#stage-review button');
             const originalText = btn.innerHTML; btn.innerHTML = "A guardar..."; btn.disabled = true;
             
-            let dataToSave = JSON.parse(JSON.stringify(fiegParsedCache));
-
-            dataToSave.forEach((item) => {
+            // Valida de novo antes de salvar
+            parsedReportsCache.forEach((item) => {
                 item.unit = document.getElementById(`edit-unit-${item.id}`).value; 
-                item.title = document.getElementById(`edit-title-${item.id}`).value; 
-                item.lead = document.getElementById(`edit-lead-${item.id}`).value; 
+                item.title = semanticTrim(document.getElementById(`edit-title-${item.id}`).value, 120, false); 
+                item.lead = semanticTrim(document.getElementById(`edit-lead-${item.id}`).value, 250, true); 
                 item.date = document.getElementById(`edit-date-${item.id}`).value; 
                 item.type = document.getElementById(`edit-type-${item.id}`).value; 
-                item.content = document.getElementById(`edit-content-${item.id}`).value;
-                
-                delete item.originalImage;
-                delete item.rawImage;
+                item.content = semanticTrim(document.getElementById(`edit-content-${item.id}`).value, 1000, true);
             });
             
             try { 
-                let newReportsData = [...fiegReportsData, ...dataToSave]; 
-                localStorage.setItem('fiegReportsV32', JSON.stringify(newReportsData)); 
-                fiegReportsData = newReportsData; 
+                let newReports = [...reports, ...parsedReportsCache]; 
+                localStorage.setItem('fiegReportsV32', JSON.stringify(newReports));
+                reports = newReports;
                 applyFilters(); 
                 closeModal(); 
             } catch (e) { 
-                console.error(e);
-                alert("⚠️ Limite de Memória do Navegador Atingido.\nO seu navegador não possui espaço suficiente para gravar mais relatórios. Por favor, apague matérias antigas do painel antes de importar e publicar novas."); 
+                alert("⚠️ Limite de Memória do Navegador Atingido.\nEsvazie o painel ou exclua relatórios antigos para salvar os novos."); 
             } finally { 
                 btn.innerHTML = originalText; 
                 btn.disabled = false; 
@@ -779,7 +821,7 @@
 
         // --- FUNÇÕES DE EDIÇÃO INDIVIDUAL E EXCLUSÃO (MAIN FEED) ---
         window.editReport = function(id) {
-            const report = fiegReportsData.find(r => r.id === id); if(!report) return;
+            const report = reports.find(r => r.id === id); if(!report) return;
             document.getElementById('edit-single-id').value = report.id; 
             document.getElementById('edit-single-unit').value = report.unit; 
             document.getElementById('edit-single-type').value = report.type; 
@@ -797,24 +839,22 @@
             document.getElementById('edit-single-modal').classList.remove('hidden');
         }
         window.closeEditModal = function() { document.getElementById('edit-single-modal').classList.add('hidden'); }
-        
         window.saveEditedReport = function() {
-            const id = document.getElementById('edit-single-id').value; 
-            const index = fiegReportsData.findIndex(r => r.id === id); 
-            if(index === -1) return;
+            const id = document.getElementById('edit-single-id').value; const index = reports.findIndex(r => r.id === id); if(index === -1) return;
             
-            fiegReportsData[index].unit = document.getElementById('edit-single-unit').value; 
-            fiegReportsData[index].type = document.getElementById('edit-single-type').value; 
-            fiegReportsData[index].date = document.getElementById('edit-single-date').value; 
-            fiegReportsData[index].title = document.getElementById('edit-single-title').value; 
-            fiegReportsData[index].lead = document.getElementById('edit-single-lead').value; 
-            fiegReportsData[index].content = document.getElementById('edit-single-content').value;
+            reports[index].unit = document.getElementById('edit-single-unit').value; 
+            reports[index].type = document.getElementById('edit-single-type').value; 
+            reports[index].date = document.getElementById('edit-single-date').value; 
+            
+            // Valida cortes na edição
+            reports[index].title = semanticTrim(document.getElementById('edit-single-title').value, 120, false); 
+            reports[index].lead = semanticTrim(document.getElementById('edit-single-lead').value, 250, true); 
+            reports[index].content = semanticTrim(document.getElementById('edit-single-content').value, 1000, true);
             
             try {
-                localStorage.setItem('fiegReportsV32', JSON.stringify(fiegReportsData)); 
+                localStorage.setItem('fiegReportsV32', JSON.stringify(reports)); 
             } catch (e) {
-                console.error(e);
-                alert("⚠️ O limite de memória do navegador foi atingido. As alterações refletirão agora na tela, mas não serão salvas após recarregar a página.");
+                alert("⚠️ O limite de memória do navegador foi atingido. As alterações não foram salvas.");
             }
             
             closeEditModal(); 
@@ -826,8 +866,8 @@
                 "Apagar Matéria",
                 "Deseja apagar esta matéria definitivamente do sistema?",
                 () => {
-                    fiegReportsData = fiegReportsData.filter(r => r.id !== id); 
-                    localStorage.setItem('fiegReportsV32', JSON.stringify(fiegReportsData)); 
+                    reports = reports.filter(r => r.id !== id); 
+                    localStorage.setItem('fiegReportsV32', JSON.stringify(reports)); 
                     applyFilters(); 
                 }
             );
@@ -835,11 +875,11 @@
         
         window.togglePdfInclusion = function(checkbox, cardId) { const card = document.getElementById(cardId); const overlay = document.getElementById(`overlay-${cardId}`); if(checkbox.checked) { card.classList.remove('exclude-from-pdf'); card.style.opacity = '1'; card.style.filter = 'none'; if(overlay) overlay.classList.add('hidden'); } else { card.classList.add('exclude-from-pdf'); card.style.opacity = '0.6'; card.style.filter = 'grayscale(100%)'; if(overlay) overlay.classList.remove('hidden'); } }
 
-        // --- LÓGICA BLINDADA DE FILTROS ---
+        // --- LÓGICA DE FILTROS ---
         window.applyFilters = function() {
             const elUnit = document.getElementById('filter-unit-text'); const elType = document.getElementById('filter-type'); const elStartMonth = document.getElementById('filter-start-month'); const elEndMonth = document.getElementById('filter-end-month'); const elStartDate = document.getElementById('filter-start-date'); const elEndDate = document.getElementById('filter-end-date');
             const unitText = elUnit?.value.toLowerCase() || ''; const type = elType?.value || 'all'; const startMonth = elStartMonth?.value || ''; const endMonth = elEndMonth?.value || ''; const startDate = elStartDate?.value || ''; const endDate = elEndDate?.value || '';
-            let filtered = fiegReportsData;
+            let filtered = reports;
             if(unitText) filtered = filtered.filter(r => r.unit.toLowerCase().includes(unitText));
             if(type !== 'all') filtered = filtered.filter(r => r.type === type);
             if(startMonth || endMonth) { filtered = filtered.filter(r => { if(!r.date) return false; const rMonth = r.date.substring(0, 7); if(startMonth && rMonth < startMonth) return false; if(endMonth && rMonth > endMonth) return false; return true; }); }
@@ -860,12 +900,17 @@
             sortedData.forEach(item => {
                 let formattedDate = 'Data Indefinida'; if(item.date) { const [y, m, d] = item.date.split('-'); const dateObj = new Date(y, m - 1, d); if(!isNaN(dateObj)) { formattedDate = new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' }).format(dateObj); } }
                 
+                let editorialBody = ''; 
+                if (item.lead && item.lead.trim().length > 0) { 
+                    editorialBody += `<div class="text-lead mb-5 text-justify text-brand-dark font-semibold border-l-4 border-brand-red pl-4 bg-gray-50 py-3 pr-3 rounded-r" style="font-family: 'Montserrat', sans-serif;">${item.lead}</div>`; 
+                }
+                
                 let paragraphsHtml = '';
                 if (item.content) { 
                     let paragraphs = item.content.split(/\n+/); 
                     for(let i = 0; i < paragraphs.length; i++) { 
                         if(paragraphs[i].trim().length > 0) { 
-                            paragraphsHtml += `<p class="mb-4 text-justify text-gray-800 text-[15px] leading-relaxed">${paragraphs[i].trim()}</p>`; 
+                            paragraphsHtml += `<p class="text-body mb-4 text-justify text-gray-800" style="font-family: 'Montserrat', sans-serif;">${paragraphs[i].trim()}</p>`; 
                         } 
                     } 
                 }
@@ -873,35 +918,22 @@
                 const card = document.createElement('div'); card.id = `card-${item.id}`; 
                 
                 card.className = 'pdf-item bg-white mb-10 pt-4 relative font-sans';
+                
+                let imageHtml = item.image ? `<div class="w-full news-image-container drop-shadow-sm"><img src="${item.image}" class="news-image"></div>` : '';
 
                 card.innerHTML = `
                     <div id="overlay-card-${item.id}" class="hidden absolute inset-0 bg-white bg-opacity-70 z-10 flex items-center justify-center pointer-events-none"><span class="bg-brand-red text-white font-black px-6 py-2 rounded shadow-lg tracking-widest border border-red-800">OCULTADO DO PDF</span></div>
+                    <div class="hide-on-pdf bg-gray-50 border-b border-gray-200 px-6 py-3 flex justify-between items-center relative z-20 mb-6 rounded"><label class="flex items-center gap-2 cursor-pointer text-sm font-bold text-brand-blue select-none hover:text-blue-800 transition"><input type="checkbox" checked onchange="togglePdfInclusion(this, 'card-${item.id}')" class="w-4 h-4 rounded text-brand-blue focus:ring-brand-blue cursor-pointer"> Incluir no Relatório (PDF)</label><div class="flex gap-2"><button onclick="editReport('${item.id}')" class="text-brand-blue hover:text-blue-800 flex items-center gap-1 text-xs font-bold transition px-3 py-1 hover:bg-blue-50 rounded border border-blue-200" title="Editar Matéria"><i class="ph-bold ph-pencil-simple text-lg"></i> Editar</button><button onclick="deleteReport('${item.id}')" class="text-gray-500 hover:text-white hover:bg-brand-red flex items-center gap-1 text-xs font-bold transition px-3 py-1 rounded border border-gray-300 hover:border-brand-red" title="Excluir Permanentemente"><i class="ph-fill ph-trash text-lg"></i> Apagar</button></div></div>
                     
-                    <div class="hide-on-pdf bg-gray-50 border-b border-gray-200 px-6 py-3 flex justify-between items-center relative z-20 mb-6 rounded">
-                        <label class="flex items-center gap-2 cursor-pointer text-sm font-bold text-brand-blue select-none hover:text-blue-800 transition">
-                            <input type="checkbox" checked onchange="togglePdfInclusion(this, 'card-${item.id}')" class="w-4 h-4 rounded text-brand-blue focus:ring-brand-blue cursor-pointer"> Incluir no Relatório (PDF)
-                        </label>
-                        <div class="flex gap-2">
-                            <button onclick="openCropModal('${item.id}', false)" class="text-brand-blue hover:text-blue-800 flex items-center gap-1 text-xs font-bold transition px-3 py-1 hover:bg-blue-50 rounded border border-blue-200" title="Ajustar Enquadramento da Imagem"><i class="ph-bold ph-crop text-lg"></i> Recortar Imagem</button>
-                            <button onclick="editReport('${item.id}')" class="text-brand-blue hover:text-blue-800 flex items-center gap-1 text-xs font-bold transition px-3 py-1 hover:bg-blue-50 rounded border border-blue-200" title="Editar Matéria"><i class="ph-bold ph-pencil-simple text-lg"></i> Editar</button>
-                            <button onclick="deleteReport('${item.id}')" class="text-gray-500 hover:text-white hover:bg-brand-red flex items-center gap-1 text-xs font-bold transition px-3 py-1 rounded border border-gray-300 hover:border-brand-red" title="Excluir Permanentemente"><i class="ph-fill ph-trash text-lg"></i> Apagar</button>
+                    <div class="pb-6 w-full">
+                        <div class="border-t border-brand-blue pt-4 w-full">
+                            <div class="mb-3"><span class="text-meta text-brand-blue font-black tracking-[0.2em] uppercase" style="font-family: 'Montserrat', sans-serif;">${item.unit}</span></div>
+                            <h3 class="text-title font-bold text-brand-dark mb-4 leading-tight" style="font-family: 'Montserrat', sans-serif;">${item.title}</h3>
+                            <div class="text-meta flex items-center gap-6 mb-6 font-bold text-brand-gray uppercase tracking-wider" style="font-family: 'Montserrat', sans-serif;"><span class="flex items-center gap-1.5"><i class="ph-fill ph-calendar-blank text-brand-blue text-base"></i> ${formattedDate}</span><span class="flex items-center gap-1.5"><i class="ph-fill ph-tag text-brand-blue text-base"></i> ${item.type}</span></div>
                         </div>
-                    </div>
-                    
-                    <div class="pb-8 w-full flex flex-col items-center">
-                        <div class="border-t-[3px] border-brand-blue pt-6 w-full flex flex-col items-center text-center">
-                            <div class="mb-3"><span class="text-brand-blue font-black tracking-[0.2em] uppercase text-xs">${item.unit}</span></div>
-                            <h3 class="font-bold text-brand-dark mb-4 text-[22px] px-4 leading-snug max-w-4xl">${item.title}</h3>
-                            <div class="flex items-center justify-center gap-6 mb-6 font-bold text-brand-gray uppercase tracking-wider text-[11px]">
-                                <span class="flex items-center gap-1.5"><i class="ph-fill ph-calendar-blank text-brand-blue text-[14px]"></i> ${formattedDate}</span>
-                                <span class="flex items-center gap-1.5"><i class="ph-fill ph-tag text-brand-blue text-[14px]"></i> ${item.type}</span>
-                            </div>
-                        </div>
-                        
-                        ${item.image ? `<div class="w-full mb-6 flex justify-center"><img src="${item.image}" class="w-full max-w-[850px] h-auto max-h-[450px] object-cover object-center shadow-sm rounded-sm"></div>` : ''}
-                        
-                        <div class="w-full text-justify px-2 md:px-4">
-                            ${item.lead ? `<div class="mb-6 text-[15px] text-brand-dark font-semibold leading-relaxed border-l-[4px] border-brand-red pl-4 bg-gray-50 py-4 pr-4">${item.lead}</div>` : ''}
+                        ${imageHtml}
+                        <div class="max-w-none w-full">
+                            ${editorialBody}
                             ${paragraphsHtml}
                         </div>
                     </div>
@@ -910,30 +942,7 @@
             });
         }
 
-        // --- EXPORTAÇÃO EXECUTIVA COM CAPTURA EXATA E MARGENS REAIS ---
-        function preValidateBeforePDF() {
-            return new Promise((resolve) => {
-                const items = document.querySelectorAll('.pdf-item:not(.exclude-from-pdf)');
-                items.forEach((item) => {
-                    const title = item.querySelector('h3');
-                    if (title && title.innerText.length > 120) title.innerText = semanticTrim(title.innerText, 120, false);
-                    
-                    const lead = item.querySelector('.border-brand-red');
-                    if (lead && lead.innerText.length > 250) lead.innerText = semanticTrim(lead.innerText, 250, true);
-                    
-                    const bodyParagraphs = item.querySelectorAll('p');
-                    let totalChars = 0;
-                    bodyParagraphs.forEach(p => {
-                        totalChars += p.innerText.length;
-                        if(totalChars > 1000) {
-                            p.innerText = semanticTrim(p.innerText, 1000 - (totalChars - p.innerText.length), true);
-                        }
-                    });
-                });
-                resolve();
-            });
-        }
-
+        // --- EXPORTAÇÃO EXECUTIVA BLINDADA ---
         function loadBase64Image(url) {
             return new Promise((resolve) => {
                 const img = new Image(); img.crossOrigin = 'Anonymous'; img.onload = () => { const canvas = document.createElement('canvas'); canvas.width = img.width; canvas.height = img.height; canvas.getContext('2d').drawImage(img, 0, 0); resolve({ dataUrl: canvas.toDataURL('image/png'), width: img.width, height: img.height }); }; img.onerror = () => resolve(null); img.src = url;
@@ -952,54 +961,48 @@
             window.scrollTo(0, 0); 
             document.body.classList.add('pdf-mode');
             
-            await preValidateBeforePDF();
-            
             await new Promise(resolve => setTimeout(resolve, 800));
 
             const element = document.getElementById('executive-dashboard');
             const headerLogo = await loadBase64Image("https://i.postimg.cc/HWKTMyKs/sistema-fieg-02.png");
 
-            // Configuração A4 Nativa: PDF captura exatamente o que vê em 900px e enquadra nas margens.
+            // Configuração do PDF com largura e margens travadas
             const opt = { 
                 margin: [25, 15, 20, 15], 
                 filename: `Informe_Executivo_FIEG_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.pdf`, 
                 image: { type: 'jpeg', quality: 1.0 }, 
-                html2canvas: { scale: 2, useCORS: true, letterRendering: true, windowWidth: 900, width: 900 }, 
-                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-                pagebreak: { mode: ['css', 'legacy'] }
+                html2canvas: { scale: 2, useCORS: true, letterRendering: true, windowWidth: 1000, width: 1000, scrollX: 0, scrollY: 0 }, 
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }, 
+                pagebreak: { mode: ['css', 'legacy'] } 
             };
 
-            html2pdf().set(opt).from(element).toPdf().get('pdf').then(function (pdf) {
-                const totalPages = pdf.internal.getNumberOfPages();
-                for (let i = 1; i <= totalPages; i++) {
-                    pdf.setPage(i);
-                    
-                    if(headerLogo) { 
-                        const imgWidth = 22; 
-                        const imgHeight = (headerLogo.height * imgWidth) / headerLogo.width; 
-                        pdf.addImage(headerLogo.dataUrl, 'PNG', 173, 10, imgWidth, imgHeight); 
+            try {
+                await html2pdf().set(opt).from(element).toPdf().get('pdf').then(function (pdf) {
+                    const totalPages = pdf.internal.getNumberOfPages();
+                    for (let i = 1; i <= totalPages; i++) {
+                        pdf.setPage(i);
+                        
+                        if(headerLogo) { 
+                            const imgWidth = 22; 
+                            const imgHeight = (headerLogo.height * imgWidth) / headerLogo.width; 
+                            pdf.addImage(headerLogo.dataUrl, 'PNG', 173, 10, imgWidth, imgHeight); 
+                        }
+                        
+                        pdf.setDrawColor(0, 58, 112); pdf.setLineWidth(0.3); pdf.line(15, 25, 195, 25);
+                        
+                        pdf.setFontSize(8); pdf.setTextColor(150); pdf.setFont('Montserrat'); pdf.text(`Informe Executivo Institucional Sistema FIEG - Pág. ${i} de ${totalPages}`, 15, 285);
                     }
-                    
-                    pdf.setDrawColor(0, 58, 112); pdf.setLineWidth(0.3); pdf.line(15, 20, 195, 20);
-                    
-                    pdf.setFontSize(8); pdf.setTextColor(150); pdf.setFont('Montserrat'); 
-                    pdf.text(`Informe Executivo Institucional Sistema FIEG - Pág. ${i} de ${totalPages}`, 15, 285);
-                }
-            }).save().then(() => {
+                }).save();
+            } catch(e) {
+                console.error(e);
+                alert("Houve um erro ao processar o PDF. Verifique a compatibilidade do navegador.");
+            } finally {
                 document.body.classList.remove('pdf-mode'); 
                 loadingOverlay.classList.remove('flex'); 
                 loadingOverlay.classList.add('hidden');
                 btn.innerHTML = originalText;
                 btn.disabled = false;
-            }).catch((e) => {
-                console.error(e);
-                alert("⚠️ Houve um erro ao processar o PDF.");
-                document.body.classList.remove('pdf-mode'); 
-                loadingOverlay.classList.add('hidden');
-                loadingOverlay.classList.remove('flex');
-                btn.innerHTML = originalText;
-                btn.disabled = false;
-            });
+            }
         }
     </script>
 </body>
