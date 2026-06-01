@@ -48,8 +48,8 @@
         .hide-on-pdf { display: block; }
         
         /* --- MODO PDF EXECUTIVO NORMATIZADO E BLINDADO --- */
-        .pdf-mode { overflow: visible !important; width: 1000px !important; min-width: 1000px !important; }
-        .pdf-mode body, .pdf-mode html { width: 1000px !important; min-width: 1000px !important; background-color: #FFFFFF !important; overflow: visible !important;}
+        body.pdf-mode { overflow: visible !important; width: 1000px !important; min-width: 1000px !important; background-color: #FFFFFF !important; }
+        html.pdf-mode { overflow: visible !important; width: 1000px !important; min-width: 1000px !important; background-color: #FFFFFF !important; }
         .pdf-mode .hide-on-pdf { display: none !important; }
         
         /* Remove sombras para renderização plana */
@@ -61,7 +61,8 @@
             padding: 0 30px !important; 
             margin: 0 auto !important;
             box-sizing: border-box !important;
-            width: 100% !important;
+            width: 1000px !important;
+            max-width: 1000px !important;
         }
         
         .pdf-mode #news-feed { 
@@ -81,6 +82,11 @@
             break-after: page !important;
             page-break-inside: avoid !important;
             break-inside: avoid !important;
+        }
+        
+        .pdf-mode .pdf-item:last-child {
+            page-break-after: auto !important;
+            break-after: auto !important;
         }
 
         /* CAIXA DE IMAGEM BLINDADA: Altura cravada em 280px para sobrar espaço ao texto de 1000 caracteres */
@@ -107,6 +113,12 @@
         .pdf-mode .exclude-from-pdf { display: none !important; height: 0 !important; margin: 0 !important; padding: 0 !important; overflow: hidden !important; }
         .pdf-mode .header-logos { display: none !important; }
         .pdf-mode #pdf-header-cover { display: block !important; }
+        
+        /* Typography overrides for PDF to ensure exact sizing */
+        .pdf-mode .text-title { font-size: 16pt !important; line-height: 1.3 !important; }
+        .pdf-mode .text-lead { font-size: 12pt !important; line-height: 1.5 !important; }
+        .pdf-mode .text-body { font-size: 11pt !important; line-height: 1.6 !important; }
+        .pdf-mode .text-meta { font-size: 10pt !important; }
         
         /* Custom Scrollbar */
         ::-webkit-scrollbar { width: 8px; }
@@ -243,9 +255,9 @@
                         <h4 class="text-xl font-bold text-brand-blue" id="upload-feedback">Selecionar ficheiros Word (.docx)</h4>
                         <p class="text-sm text-gray-500 mt-2">A I.A. fará a limpeza aplicando as Normas Editoriais Semânticas.</p>
                         <ul class="text-xs text-brand-gray mt-4 list-disc text-left max-w-xs mx-auto">
-                            <li>Títulos: máx. 120 caracteres</li>
-                            <li>Sínteses (Lead): máx. 250 caracteres</li>
-                            <li>Corpo: máx. 1000 caracteres</li>
+                            <li>Títulos: máx. 200 caracteres</li>
+                            <li>Sínteses (Lead): máx. 500 caracteres</li>
+                            <li>Corpo: máx. 1500 caracteres</li>
                             <li>Imagens centralizadas em Widescreen 2:1</li>
                         </ul>
                     </div>
@@ -254,7 +266,7 @@
                 <div id="stage-review" class="hidden">
                     <div class="flex justify-between items-center mb-4 bg-white p-4 rounded-xl shadow-sm border border-gray-200">
                         <h4 class="text-lg font-bold text-brand-dark"><span id="review-count">0</span> Pautas prontas para revisão.</h4>
-                        <button onclick="saveAllParsedReports()" class="bg-brand-blue text-white px-6 py-2 rounded-lg font-bold shadow-md hover:bg-blue-900 transition flex items-center gap-2">
+                        <button onclick="saveAllParsedReports(event)" class="bg-brand-blue text-white px-6 py-2 rounded-lg font-bold shadow-md hover:bg-blue-900 transition flex items-center gap-2">
                             <i class="ph-fill ph-check-circle"></i> Aprovar e Publicar
                         </button>
                     </div>
@@ -327,15 +339,15 @@
                 </div>
                 <div>
                     <label class="flex justify-between text-[10px] font-bold text-brand-gray uppercase mb-1"><span>Manchete Executiva (Título Curto)</span> <span id="count-title" class="text-brand-red"></span></label>
-                    <input type="text" id="edit-single-title" maxlength="120" oninput="document.getElementById('count-title').innerText = this.value.length + '/120';" class="w-full border border-gray-300 rounded p-2 focus:outline-none focus:ring-2 focus:ring-brand-blue font-bold text-lg text-brand-dark" style="font-family: 'Montserrat', sans-serif;">
+                    <input type="text" id="edit-single-title" maxlength="200" oninput="document.getElementById('count-title').innerText = this.value.length + '/200';" class="w-full border border-gray-300 rounded p-2 focus:outline-none focus:ring-2 focus:ring-brand-blue font-bold text-lg text-brand-dark">
                 </div>
                 <div>
                     <label class="flex justify-between text-[10px] font-bold text-brand-gray uppercase mb-1"><span>Síntese Estratégica (Lead)</span> <span id="count-lead" class="text-brand-red"></span></label>
-                    <textarea id="edit-single-lead" rows="2" maxlength="250" oninput="document.getElementById('count-lead').innerText = this.value.length + '/250';" class="w-full border border-gray-300 rounded p-3 focus:outline-none focus:ring-2 focus:ring-brand-blue text-sm text-brand-dark font-semibold leading-relaxed bg-gray-50 border-l-4 border-l-brand-red" style="font-family: 'Montserrat', sans-serif;"></textarea>
+                    <textarea id="edit-single-lead" rows="2" maxlength="500" oninput="document.getElementById('count-lead').innerText = this.value.length + '/500';" class="w-full border border-gray-300 rounded p-3 focus:outline-none focus:ring-2 focus:ring-brand-blue text-sm text-brand-dark font-semibold leading-relaxed bg-gray-50 border-l-4 border-l-brand-red"></textarea>
                 </div>
                 <div>
                     <label class="flex justify-between text-[10px] font-bold text-brand-gray uppercase mb-1"><span>Corpo Institucional (Detalhes)</span> <span id="count-content" class="text-brand-red"></span></label>
-                    <textarea id="edit-single-content" rows="6" maxlength="1000" oninput="document.getElementById('count-content').innerText = this.value.length + '/1000';" class="w-full border border-gray-300 rounded p-3 focus:outline-none text-gray-800 leading-relaxed resize-none" style="font-family: 'Montserrat', sans-serif;"></textarea>
+                    <textarea id="edit-single-content" rows="6" maxlength="1500" oninput="document.getElementById('count-content').innerText = this.value.length + '/1500';" class="w-full border border-gray-300 rounded p-3 focus:outline-none text-gray-800 leading-relaxed resize-none"></textarea>
                 </div>
             </div>
             <div class="p-4 border-t border-gray-200 bg-gray-50 flex justify-end gap-3">
@@ -371,10 +383,11 @@
     </div>
 
     <script>
-        // --- PREVENÇÃO DE ERROS DE DECLARAÇÃO E MEMÓRIA ---
+        // --- PREVENÇÃO DE ERROS DE DECLARAÇÃO E MEMÓRIA (V34) ---
+        // Variáveis em VAR garantem funcionamento no live-reload
         var reports = [];
         try {
-            reports = JSON.parse(localStorage.getItem('fiegReportsV32')) || [];
+            reports = JSON.parse(localStorage.getItem('fiegReportsV34')) || [];
         } catch(e) {
             reports = [];
         }
@@ -417,7 +430,7 @@
             let item = fromCache ? parsedReportsCache.find(r => r.id === id) : reports.find(r => r.id === id);
             
             if (!item || !item.originalImage) {
-                alert("A imagem original foi descartada para otimizar o espaço do seu navegador.\nPara reenquadrar, por favor exclua esta matéria e importe o arquivo Word novamente.");
+                alert("A imagem original foi descartada para otimizar a memória do sistema e evitar travamentos.\nPara reenquadrar a foto, exclua esta matéria e importe o arquivo Word novamente.");
                 return;
             }
 
@@ -430,10 +443,9 @@
                 currentCropper.destroy();
             }
 
-            // Inicia o Cropper.js travado na proporção exata 2:1 para o PDF
             setTimeout(() => {
                 currentCropper = new Cropper(imgTarget, {
-                    aspectRatio: 2 / 1, // Widescreen Rigoroso para o PDF
+                    aspectRatio: 2 / 1, // Widescreen
                     viewMode: 1, 
                     dragMode: 'move',
                     autoCropArea: 1,
@@ -466,7 +478,7 @@
                 imageSmoothingQuality: 'high',
             });
             
-            const newImageBase64 = canvas.toDataURL('image/jpeg', 0.90);
+            const newImageBase64 = canvas.toDataURL('image/jpeg', 0.85); // Mantem otimizado
             
             if (isEditingFromCache) {
                 let item = parsedReportsCache.find(r => r.id === currentCropId);
@@ -479,9 +491,9 @@
                 if (item) {
                     item.image = newImageBase64;
                     try {
-                        localStorage.setItem('fiegReportsV32', JSON.stringify(reports));
+                        localStorage.setItem('fiegReportsV34', JSON.stringify(reports));
                     } catch(e) {
-                        alert("⚠️ O recorte foi aplicado na tela, mas o limite de memória do navegador não permitiu salvar as alterações permanentemente.");
+                        alert("⚠️ Limite de Memória Atingido.\nA alteração foi aplicada visualmente, mas não pôde ser salva. Limpe relatórios antigos.");
                     }
                     applyFilters();
                 }
@@ -490,38 +502,36 @@
             closeCropModal();
         }
 
-        // Processamento Mestre da Imagem na extração
+        // Processamento de Imagem com COMPRESSÃO EXTREMA para evitar o "App Freeze"
         function processImageForStorage(base64Str) {
             return new Promise((resolve) => {
                 if(!base64Str) { resolve({ original: null, cropped: null }); return; }
                 const img = new Image(); 
                 img.src = base64Str;
                 img.onload = () => { 
-                    // Guardar a Original Comprimida (para o modo de Edição/Cropper)
+                    // 1. Imagem Original (Para o Cropper) - Compressão Máxima para poupar a memória do Storage
                     const origCanvas = document.createElement('canvas');
                     let oW = img.width;
                     let oH = img.height;
-                    const MAX_ORIG = 1200; 
+                    const MAX_ORIG = 800; // Reduzido drasticamente para estabilidade
                     if (oW > oH && oW > MAX_ORIG) { oH *= MAX_ORIG / oW; oW = MAX_ORIG; }
                     else if (oH > MAX_ORIG) { oW *= MAX_ORIG / oH; oH = MAX_ORIG; }
                     origCanvas.width = oW;
                     origCanvas.height = oH;
                     const origCtx = origCanvas.getContext('2d');
                     origCtx.drawImage(img, 0, 0, oW, oH);
-                    const originalImage = origCanvas.toDataURL('image/jpeg', 0.85);
+                    const originalImage = origCanvas.toDataURL('image/jpeg', 0.50); // Qualidade a 50% para guardar histórico
 
-                    // Gerar Recorte Automático (1000x500) Default
+                    // 2. Recorte 1000x500 Automático
                     const cropCanvas = document.createElement('canvas'); 
                     cropCanvas.width = 1000; 
                     cropCanvas.height = 500; 
                     const cropCtx = cropCanvas.getContext('2d'); 
-                    
                     const scale = Math.max(cropCanvas.width / img.width, cropCanvas.height / img.height);
                     const x = (cropCanvas.width / 2) - (img.width / 2) * scale;
                     const y = (cropCanvas.height / 2) - (img.height / 2) * scale;
-                    
                     cropCtx.drawImage(img, x, y, img.width * scale, img.height * scale); 
-                    const croppedImage = cropCanvas.toDataURL('image/jpeg', 0.90); 
+                    const croppedImage = cropCanvas.toDataURL('image/jpeg', 0.70); // Qualidade segura para PDF
 
                     resolve({ original: originalImage, cropped: croppedImage });
                 }; 
@@ -529,7 +539,6 @@
             });
         }
 
-        // --- MOTOR DE REDAÇÃO ESPECIALISTA (Corte Semântico Seguro) ---
         function semanticTrim(text, maxLength, isBody = false) {
             if (!text || text.length <= maxLength) return text;
             
@@ -552,7 +561,6 @@
             if(!text) return "";
             let clean = text.replace(/<[^>]*>?/gm, ''); 
             clean = clean.replace(/\*/g, '');
-            // Limpa as datas extensas do WhatsApp
             clean = clean.replace(/^\s*\d{1,2}\s+de\s+[a-zA-ZçÇ]+\s*(de\s*\d{4})?\s*[-–]\s*/i, '');
             clean = clean.replace(/^(?:Entre\s+(?:os\s+)?dias\s+|De\s+)?\d{1,2}(?:\s*(?:a|e|até|a)\s*\d{1,2})?\s+de\s+[a-zA-ZçÇ]+(?:\s+de\s+\d{4})?\s*(?:[-–,.:])?\s*/i, '');
             
@@ -585,18 +593,11 @@
         function generateTitle(firstSentence) {
             let title = firstSentence;
             title = title.replace(/^(A unidade realizou|A unidade promoveu|Representantes da unidade participaram de|Representantes da unidade participaram da|A instituição promoveu|Foi dado início ao|Foi dado início à|As atividades foram iniciadas com|A unidade celebrou a|A unidade celebrou o|A unidade recebeu|A comitiva institucional foi recebida|A equipe acompanhou a|A equipe acompanhou o|A unidade encerrou a|O Departamento Nacional do SESI realizou|A Coordenação Regional de Educação.*?sediou uma)\s*(o|a|os|as|um|uma)?\s*/i, '');
-            
-            // Isola o assunto principal
             let coreParts = title.split(/(?:\s+com o objetivo|\s+durante|\s+visando|\s+que teve|\s+realizada em|\s+realizado em|\s+com a finalidade|\s+para promover)/i);
             title = coreParts[0].trim();
             title = title.replace(/[,:;.]\s*$/, '');
             if(title.length > 0) title = title.charAt(0).toUpperCase() + title.slice(1);
-            
-            // NORMATIZAÇÃO 120 Caracteres
-            if (title.length > 120) { 
-                title = semanticTrim(title, 120, false);
-            }
-            return title;
+            return semanticTrim(title, 200, false);
         }
 
         function generateExecutiveSummary(firstSentence) {
@@ -618,10 +619,7 @@
             } else {
                 lead = `Destaque institucional: ${firstSentence.split('.')[0].trim()}.`;
             }
-            
-            // NORMATIZAÇÃO 250 Caracteres
-            if(lead.length > 250) { lead = semanticTrim(lead, 250, true); }
-            return lead;
+            return semanticTrim(lead, 500, true);
         }
 
         function extractDate(text) {
@@ -652,18 +650,17 @@
                 "Apagar Todos os Dados",
                 "Deseja apagar todos os relatórios cadastrados no sistema? Esta ação limpará o seu histórico e não poderá ser desfeita.",
                 () => {
-                    localStorage.removeItem('fiegReportsV32');
+                    localStorage.removeItem('fiegReportsV34');
                     reports = [];
                     applyFilters();
                 }
             );
         }
 
-        // --- PROCESSAMENTO DO WORD ---
         async function processWordFiles(event) {
             const files = event.target.files;
             if (!files || files.length === 0) return;
-            document.getElementById('upload-feedback').innerText = "A processar, normatizar e aplicar corte semântico...";
+            document.getElementById('upload-feedback').innerText = "A processar e higienizar textos...";
             parsedReportsCache = [];
             for (let i = 0; i < files.length; i++) {
                 const arrayBuffer = await files[i].arrayBuffer();
@@ -673,6 +670,7 @@
                 let currentAction = null;
                 let rawAccumulatedContent = "";
                 const nodes = Array.from(tempDiv.childNodes);
+                
                 for (let node of nodes) {
                     let rawText = node.textContent;
                     let textUpper = rawText.toUpperCase();
@@ -691,10 +689,8 @@
                                 if(restOfPar) bodyArr.push(restOfPar + (restOfPar.endsWith('.') ? '' : '.'));
                                 for (let j = 1; j < paragraphs.length; j++) bodyArr.push(paragraphs[j]);
                                 
-                                // NORMATIZAÇÃO 1000
                                 let fullBody = bodyArr.join('\n\n');
-                                if(fullBody.length > 1000) fullBody = semanticTrim(fullBody, 1000, true);
-                                currentAction.content = fullBody;
+                                currentAction.content = semanticTrim(fullBody, 1500, true);
                             }
                             if(!currentAction.type) currentAction.type = inferCategory(rawAccumulatedContent);
                             if(!currentAction.date) currentAction.date = new Date().toISOString().split('T')[0];
@@ -724,8 +720,7 @@
                         for (let j = 1; j < paragraphs.length; j++) bodyArr.push(paragraphs[j]);
                         
                         let fullBody = bodyArr.join('\n\n');
-                        if(fullBody.length > 1000) fullBody = semanticTrim(fullBody, 1000, true);
-                        currentAction.content = fullBody;
+                        currentAction.content = semanticTrim(fullBody, 1500, true);
                     }
                     if(!currentAction.type) currentAction.type = inferCategory(rawAccumulatedContent);
                     if(!currentAction.date) currentAction.date = new Date().toISOString().split('T')[0];
@@ -733,8 +728,7 @@
                 }
             }
 
-            // Otimiza as imagens e gera os crops matemáticos assincronamente
-            document.getElementById('upload-feedback').innerText = "A aplicar enquadramentos primários...";
+            document.getElementById('upload-feedback').innerText = "A aplicar enquadramentos matemáticos...";
             const imagePromises = parsedReportsCache.map(async (item) => {
                 if (item.rawImage) {
                     const processed = await processImageForStorage(item.rawImage);
@@ -772,9 +766,9 @@
                         <div><label class="text-[10px] font-bold text-gray-400 uppercase">Unidade</label><input type="text" value="${item.unit}" id="edit-unit-${item.id}" class="w-full font-bold text-sm text-brand-blue border-b border-gray-300 focus:outline-none bg-transparent uppercase"></div>
                         <div><label class="text-[10px] font-bold text-gray-400 uppercase">Data</label><input type="date" value="${item.date}" id="edit-date-${item.id}" class="w-full text-xs border border-gray-300 rounded p-1 focus:outline-none font-bold text-brand-dark"></div>
                     </div>
-                    <div class="mb-2"><label class="flex justify-between text-[10px] font-bold text-gray-400 uppercase"><span>Manchete</span> <span>${item.title.length}/120</span></label><textarea id="edit-title-${item.id}" maxlength="120" rows="2" class="w-full text-sm font-bold border border-gray-300 rounded p-1.5 focus:outline-none bg-gray-50 resize-none text-brand-dark" style="font-family: 'Montserrat', sans-serif;">${item.title}</textarea></div>
-                    <div class="mb-2"><label class="flex justify-between text-[10px] font-bold text-gray-400 uppercase"><span>Síntese (Lead)</span> <span>${item.lead.length}/250</span></label><textarea id="edit-lead-${item.id}" maxlength="250" rows="3" class="w-full text-xs font-semibold text-brand-dark border-l-[3px] border-brand-red border-y border-r border-gray-300 rounded-r p-2 focus:outline-none bg-red-50 resize-none" style="font-family: 'Montserrat', sans-serif;">${item.lead}</textarea></div>
-                    <div class="mb-2"><label class="flex justify-between text-[10px] font-bold text-gray-400 uppercase"><span>Detalhes Institucionais</span> <span>${item.content.length}/1000</span></label><textarea id="edit-content-${item.id}" maxlength="1000" rows="3" class="w-full text-xs border border-gray-300 rounded p-2 focus:outline-none text-gray-700 leading-relaxed resize-none" style="font-family: 'Montserrat', sans-serif;">${item.content}</textarea></div>
+                    <div class="mb-2"><label class="flex justify-between text-[10px] font-bold text-gray-400 uppercase"><span>Manchete</span> <span>${item.title.length}/200</span></label><textarea id="edit-title-${item.id}" maxlength="200" rows="2" class="w-full text-sm font-bold border border-gray-300 rounded p-1.5 focus:outline-none bg-gray-50 resize-none text-brand-dark" style="font-family: 'Montserrat', sans-serif;">${item.title}</textarea></div>
+                    <div class="mb-2"><label class="flex justify-between text-[10px] font-bold text-gray-400 uppercase"><span>Síntese (Lead)</span> <span>${item.lead.length}/500</span></label><textarea id="edit-lead-${item.id}" maxlength="500" rows="3" class="w-full text-xs font-semibold text-brand-dark border-l-[3px] border-brand-red border-y border-r border-gray-300 rounded-r p-2 focus:outline-none bg-red-50 resize-none" style="font-family: 'Montserrat', sans-serif;">${item.lead}</textarea></div>
+                    <div class="mb-2"><label class="flex justify-between text-[10px] font-bold text-gray-400 uppercase"><span>Detalhes Institucionais</span> <span>${item.content.length}/1500</span></label><textarea id="edit-content-${item.id}" maxlength="1500" rows="3" class="w-full text-xs border border-gray-300 rounded p-2 focus:outline-none text-gray-700 leading-relaxed resize-none" style="font-family: 'Montserrat', sans-serif;">${item.content}</textarea></div>
                     <div><label class="text-[10px] font-bold text-gray-400 uppercase">Eixo</label><select id="edit-type-${item.id}" class="w-full text-xs border border-gray-300 rounded p-1.5 focus:outline-none bg-blue-50 text-brand-blue font-semibold"><option value="Educação e Qualificação" ${item.type === 'Educação e Qualificação' ? 'selected' : ''}>Educação e Qualificação</option><option value="Saúde e Segurança" ${item.type === 'Saúde e Segurança' ? 'selected' : ''}>Saúde e Segurança</option><option value="Indústria 4.0 e Inovação" ${item.type === 'Indústria 4.0 e Inovação' ? 'selected' : ''}>Indústria 4.0 e Inovação</option><option value="Relações Institucionais" ${item.type === 'Relações Institucionais' ? 'selected' : ''}>Relações Institucionais</option></select></div>
                 `;
                 container.appendChild(card);
@@ -790,22 +784,27 @@
 
         window.saveAllParsedReports = async function(event) {
             const btn = event ? event.currentTarget : document.querySelector('#stage-review button');
-            const originalText = btn.innerHTML; btn.innerHTML = "A guardar..."; btn.disabled = true;
+            const originalText = btn.innerHTML; 
+            btn.innerHTML = "A guardar..."; 
+            btn.disabled = true;
             
-            // Valida de novo antes de salvar
+            // Aplica as edições feitas na tela e DESTRÓI a imagem original para poupar a memória do navegador 
             parsedReportsCache.forEach((item) => {
                 item.unit = document.getElementById(`edit-unit-${item.id}`).value; 
-                item.title = semanticTrim(document.getElementById(`edit-title-${item.id}`).value, 120, false); 
-                item.lead = semanticTrim(document.getElementById(`edit-lead-${item.id}`).value, 250, true); 
+                item.title = semanticTrim(document.getElementById(`edit-title-${item.id}`).value, 200, false); 
+                item.lead = semanticTrim(document.getElementById(`edit-lead-${item.id}`).value, 500, true); 
                 item.date = document.getElementById(`edit-date-${item.id}`).value; 
                 item.type = document.getElementById(`edit-type-${item.id}`).value; 
-                item.content = semanticTrim(document.getElementById(`edit-content-${item.id}`).value, 1000, true);
+                item.content = semanticTrim(document.getElementById(`edit-content-${item.id}`).value, 1500, true);
+                
+                // OTIMIZAÇÃO CRÍTICA
+                delete item.originalImage; 
             });
             
             try { 
-                let newReports = [...reports, ...parsedReportsCache]; 
-                localStorage.setItem('fiegReportsV32', JSON.stringify(newReports));
-                reports = newReports;
+                let newReportsData = [...reports, ...parsedReportsCache]; 
+                localStorage.setItem('fiegReportsV34', JSON.stringify(newReportsData)); 
+                reports = newReportsData; 
                 applyFilters(); 
                 closeModal(); 
             } catch (e) { 
@@ -828,35 +827,32 @@
             document.getElementById('edit-single-date').value = report.date; 
             
             document.getElementById('edit-single-title').value = report.title; 
-            document.getElementById('count-title').innerText = report.title.length + '/120';
+            document.getElementById('count-title').innerText = report.title.length + '/200';
             
             document.getElementById('edit-single-lead').value = report.lead || ''; 
-            document.getElementById('count-lead').innerText = (report.lead ? report.lead.length : 0) + '/250';
+            document.getElementById('count-lead').innerText = (report.lead ? report.lead.length : 0) + '/500';
             
             document.getElementById('edit-single-content').value = report.content || '';
-            document.getElementById('count-content').innerText = (report.content ? report.content.length : 0) + '/1000';
+            document.getElementById('count-content').innerText = (report.content ? report.content.length : 0) + '/1500';
             
             document.getElementById('edit-single-modal').classList.remove('hidden');
         }
         window.closeEditModal = function() { document.getElementById('edit-single-modal').classList.add('hidden'); }
         window.saveEditedReport = function() {
             const id = document.getElementById('edit-single-id').value; const index = reports.findIndex(r => r.id === id); if(index === -1) return;
-            
             reports[index].unit = document.getElementById('edit-single-unit').value; 
             reports[index].type = document.getElementById('edit-single-type').value; 
             reports[index].date = document.getElementById('edit-single-date').value; 
             
-            // Valida cortes na edição
-            reports[index].title = semanticTrim(document.getElementById('edit-single-title').value, 120, false); 
-            reports[index].lead = semanticTrim(document.getElementById('edit-single-lead').value, 250, true); 
-            reports[index].content = semanticTrim(document.getElementById('edit-single-content').value, 1000, true);
+            reports[index].title = semanticTrim(document.getElementById('edit-single-title').value, 200, false); 
+            reports[index].lead = semanticTrim(document.getElementById('edit-single-lead').value, 500, true); 
+            reports[index].content = semanticTrim(document.getElementById('edit-single-content').value, 1500, true);
             
             try {
-                localStorage.setItem('fiegReportsV32', JSON.stringify(reports)); 
+                localStorage.setItem('fiegReportsV34', JSON.stringify(reports)); 
             } catch (e) {
-                alert("⚠️ O limite de memória do navegador foi atingido. As alterações não foram salvas.");
+                alert("⚠️ O limite de memória do navegador foi atingido. As alterações refletirão agora na tela, mas não serão salvas permanentemente.");
             }
-            
             closeEditModal(); 
             applyFilters();
         }
@@ -867,7 +863,7 @@
                 "Deseja apagar esta matéria definitivamente do sistema?",
                 () => {
                     reports = reports.filter(r => r.id !== id); 
-                    localStorage.setItem('fiegReportsV32', JSON.stringify(reports)); 
+                    localStorage.setItem('fiegReportsV34', JSON.stringify(reports)); 
                     applyFilters(); 
                 }
             );
@@ -875,7 +871,7 @@
         
         window.togglePdfInclusion = function(checkbox, cardId) { const card = document.getElementById(cardId); const overlay = document.getElementById(`overlay-${cardId}`); if(checkbox.checked) { card.classList.remove('exclude-from-pdf'); card.style.opacity = '1'; card.style.filter = 'none'; if(overlay) overlay.classList.add('hidden'); } else { card.classList.add('exclude-from-pdf'); card.style.opacity = '0.6'; card.style.filter = 'grayscale(100%)'; if(overlay) overlay.classList.remove('hidden'); } }
 
-        // --- LÓGICA DE FILTROS ---
+        // --- LÓGICA BLINDADA DE FILTROS ---
         window.applyFilters = function() {
             const elUnit = document.getElementById('filter-unit-text'); const elType = document.getElementById('filter-type'); const elStartMonth = document.getElementById('filter-start-month'); const elEndMonth = document.getElementById('filter-end-month'); const elStartDate = document.getElementById('filter-start-date'); const elEndDate = document.getElementById('filter-end-date');
             const unitText = elUnit?.value.toLowerCase() || ''; const type = elType?.value || 'all'; const startMonth = elStartMonth?.value || ''; const endMonth = elEndMonth?.value || ''; const startDate = elStartDate?.value || ''; const endDate = elEndDate?.value || '';
@@ -900,6 +896,7 @@
             sortedData.forEach(item => {
                 let formattedDate = 'Data Indefinida'; if(item.date) { const [y, m, d] = item.date.split('-'); const dateObj = new Date(y, m - 1, d); if(!isNaN(dateObj)) { formattedDate = new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' }).format(dateObj); } }
                 
+                // MÁGICA TIPOGRÁFICA: Aplicação forçada das fontes executivas
                 let editorialBody = ''; 
                 if (item.lead && item.lead.trim().length > 0) { 
                     editorialBody += `<div class="text-lead mb-5 text-justify text-brand-dark font-semibold border-l-4 border-brand-red pl-4 bg-gray-50 py-3 pr-3 rounded-r" style="font-family: 'Montserrat', sans-serif;">${item.lead}</div>`; 
@@ -919,20 +916,21 @@
                 
                 card.className = 'pdf-item bg-white mb-10 pt-4 relative font-sans';
                 
+                // CAIXA DE IMAGEM 280px ALTURA (Fixo) COM OBJECT-FIT: COVER E FUNDO CINZA
                 let imageHtml = item.image ? `<div class="w-full news-image-container drop-shadow-sm"><img src="${item.image}" class="news-image"></div>` : '';
 
                 card.innerHTML = `
                     <div id="overlay-card-${item.id}" class="hidden absolute inset-0 bg-white bg-opacity-70 z-10 flex items-center justify-center pointer-events-none"><span class="bg-brand-red text-white font-black px-6 py-2 rounded shadow-lg tracking-widest border border-red-800">OCULTADO DO PDF</span></div>
                     <div class="hide-on-pdf bg-gray-50 border-b border-gray-200 px-6 py-3 flex justify-between items-center relative z-20 mb-6 rounded"><label class="flex items-center gap-2 cursor-pointer text-sm font-bold text-brand-blue select-none hover:text-blue-800 transition"><input type="checkbox" checked onchange="togglePdfInclusion(this, 'card-${item.id}')" class="w-4 h-4 rounded text-brand-blue focus:ring-brand-blue cursor-pointer"> Incluir no Relatório (PDF)</label><div class="flex gap-2"><button onclick="editReport('${item.id}')" class="text-brand-blue hover:text-blue-800 flex items-center gap-1 text-xs font-bold transition px-3 py-1 hover:bg-blue-50 rounded border border-blue-200" title="Editar Matéria"><i class="ph-bold ph-pencil-simple text-lg"></i> Editar</button><button onclick="deleteReport('${item.id}')" class="text-gray-500 hover:text-white hover:bg-brand-red flex items-center gap-1 text-xs font-bold transition px-3 py-1 rounded border border-gray-300 hover:border-brand-red" title="Excluir Permanentemente"><i class="ph-fill ph-trash text-lg"></i> Apagar</button></div></div>
                     
-                    <div class="pb-6 w-full">
-                        <div class="border-t border-brand-blue pt-4 w-full">
+                    <div class="pb-6">
+                        <div class="border-t border-brand-blue pt-4">
                             <div class="mb-3"><span class="text-meta text-brand-blue font-black tracking-[0.2em] uppercase" style="font-family: 'Montserrat', sans-serif;">${item.unit}</span></div>
                             <h3 class="text-title font-bold text-brand-dark mb-4 leading-tight" style="font-family: 'Montserrat', sans-serif;">${item.title}</h3>
                             <div class="text-meta flex items-center gap-6 mb-6 font-bold text-brand-gray uppercase tracking-wider" style="font-family: 'Montserrat', sans-serif;"><span class="flex items-center gap-1.5"><i class="ph-fill ph-calendar-blank text-brand-blue text-base"></i> ${formattedDate}</span><span class="flex items-center gap-1.5"><i class="ph-fill ph-tag text-brand-blue text-base"></i> ${item.type}</span></div>
                         </div>
                         ${imageHtml}
-                        <div class="max-w-none w-full">
+                        <div class="max-w-none">
                             ${editorialBody}
                             ${paragraphsHtml}
                         </div>
@@ -942,7 +940,7 @@
             });
         }
 
-        // --- EXPORTAÇÃO EXECUTIVA BLINDADA ---
+        // --- EXPORTAÇÃO EXECUTIVA COM PROTEÇÃO DE EIXOS ---
         function loadBase64Image(url) {
             return new Promise((resolve) => {
                 const img = new Image(); img.crossOrigin = 'Anonymous'; img.onload = () => { const canvas = document.createElement('canvas'); canvas.width = img.width; canvas.height = img.height; canvas.getContext('2d').drawImage(img, 0, 0); resolve({ dataUrl: canvas.toDataURL('image/png'), width: img.width, height: img.height }); }; img.onerror = () => resolve(null); img.src = url;
@@ -961,12 +959,12 @@
             window.scrollTo(0, 0); 
             document.body.classList.add('pdf-mode');
             
+            // Garantia adicional de layout plano antes do canvas fotografar
             await new Promise(resolve => setTimeout(resolve, 800));
 
             const element = document.getElementById('executive-dashboard');
             const headerLogo = await loadBase64Image("https://i.postimg.cc/HWKTMyKs/sistema-fieg-02.png");
 
-            // Configuração do PDF com largura e margens travadas
             const opt = { 
                 margin: [25, 15, 20, 15], 
                 filename: `Informe_Executivo_FIEG_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.pdf`, 
@@ -976,33 +974,38 @@
                 pagebreak: { mode: ['css', 'legacy'] } 
             };
 
-            try {
-                await html2pdf().set(opt).from(element).toPdf().get('pdf').then(function (pdf) {
-                    const totalPages = pdf.internal.getNumberOfPages();
-                    for (let i = 1; i <= totalPages; i++) {
-                        pdf.setPage(i);
-                        
-                        if(headerLogo) { 
-                            const imgWidth = 22; 
-                            const imgHeight = (headerLogo.height * imgWidth) / headerLogo.width; 
-                            pdf.addImage(headerLogo.dataUrl, 'PNG', 173, 10, imgWidth, imgHeight); 
-                        }
-                        
-                        pdf.setDrawColor(0, 58, 112); pdf.setLineWidth(0.3); pdf.line(15, 25, 195, 25);
-                        
-                        pdf.setFontSize(8); pdf.setTextColor(150); pdf.setFont('Montserrat'); pdf.text(`Informe Executivo Institucional Sistema FIEG - Pág. ${i} de ${totalPages}`, 15, 285);
+            // Utilizando o método clássico de Promises do html2pdf (estável contra congelamentos)
+            html2pdf().set(opt).from(element).toPdf().get('pdf').then(function (pdf) {
+                const totalPages = pdf.internal.getNumberOfPages();
+                for (let i = 1; i <= totalPages; i++) {
+                    pdf.setPage(i);
+                    
+                    if(headerLogo) { 
+                        const imgWidth = 22; 
+                        const imgHeight = (headerLogo.height * imgWidth) / headerLogo.width; 
+                        pdf.addImage(headerLogo.dataUrl, 'PNG', 173, 10, imgWidth, imgHeight); 
                     }
-                }).save();
-            } catch(e) {
-                console.error(e);
-                alert("Houve um erro ao processar o PDF. Verifique a compatibilidade do navegador.");
-            } finally {
+                    
+                    pdf.setDrawColor(0, 58, 112); pdf.setLineWidth(0.3); pdf.line(15, 25, 195, 25);
+                    
+                    pdf.setFontSize(8); pdf.setTextColor(150); pdf.setFont('Montserrat'); 
+                    pdf.text(`Informe Executivo Institucional Sistema FIEG - Pág. ${i} de ${totalPages}`, 15, 285);
+                }
+            }).save().then(() => {
                 document.body.classList.remove('pdf-mode'); 
                 loadingOverlay.classList.remove('flex'); 
                 loadingOverlay.classList.add('hidden');
                 btn.innerHTML = originalText;
                 btn.disabled = false;
-            }
+            }).catch((e) => {
+                console.error(e);
+                alert("⚠️ Houve um erro ao processar o PDF.");
+                document.body.classList.remove('pdf-mode'); 
+                loadingOverlay.classList.add('hidden');
+                loadingOverlay.classList.remove('flex');
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            });
         }
     </script>
 </body>
