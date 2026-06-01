@@ -37,8 +37,8 @@
       "muted-text": {
         "role": "neutral",
         "displayName": "Texto Secundario",
-        "canonical": "#8D99AE",
-        "tonalRamp": ["#161A21", "#2D3440", "#4F5A6D", "#707D94", "#8D99AE", "#ADB7C7", "#D0D6DF", "#F1F4F7"]
+        "canonical": "#5B667A",
+        "tonalRamp": ["#11151C", "#252B35", "#3E4857", "#5B667A", "#7B8798", "#A4ADBA", "#CBD1DA", "#EEF1F5"]
       }
     },
     "typographyMeta": {
@@ -174,8 +174,8 @@
         "section": "colors"
       },
       {
-        "name": "The Contrast Debt Rule",
-        "body": "O cinza secundario atual e parte do sistema existente, mas nao deve ser expandido sem correcao de contraste para WCAG AA.",
+        "name": "The Contrast Rule",
+        "body": "Texto secundario precisa manter contraste WCAG AA. Nunca use cinza claro para labels, placeholders ou metadados importantes.",
         "section": "colors"
       },
       {

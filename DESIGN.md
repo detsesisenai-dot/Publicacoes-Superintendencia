@@ -9,7 +9,7 @@ colors:
   surface-muted: "#F9FAFB"
   surface-panel: "#F3F4F6"
   ink: "#2B2D42"
-  muted-text: "#8D99AE"
+  muted-text: "#5B667A"
   body-text: "#1F2937"
   neutral-border: "#E5E7EB"
   neutral-control-border: "#D1D5DB"
@@ -130,14 +130,14 @@ A paleta atual e institucional e restrita: azul profundo para identidade e acoes
 - **Superficie Branca**: base de cabecalho, filtros, modais, cards de revisao e conteudo do informe.
 - **Superficie Muted**: fundos internos de campos, barras de acao, areas de upload e containers secundarios.
 - **Tinta Executiva**: texto principal, titulos internos e conteudo institucional.
-- **Texto Secundario**: metadados, descricoes e labels. O token atual tem contraste baixo e deve ser escurecido em uma futura melhoria.
+- **Texto Secundario**: metadados, descricoes e labels. O token deve permanecer escuro o suficiente para atingir WCAG AA em superficies brancas e cinza claro.
 - **Borda Neutra**: divisoes, contornos de campos, separadores e bordas de cards.
 
 ### Named Rules
 
 **The Institutional Accent Rule.** Azul e vermelho devem aparecer como acao, identidade, enfase ou risco. Eles nao devem virar decoracao de fundo.
 
-**The Contrast Debt Rule.** O cinza secundario atual e parte do sistema existente, mas nao deve ser expandido sem correcao de contraste para WCAG AA.
+**The Contrast Rule.** Texto secundario precisa manter contraste WCAG AA. Nunca use cinza claro para labels, placeholders ou metadados importantes.
 
 ## 3. Typography
 
