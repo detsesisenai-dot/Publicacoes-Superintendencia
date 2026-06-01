@@ -29,14 +29,7 @@
                             red: '#E31937',  
                             light: '#F4F6F9', 
                             dark: '#2B2D42',
-                            gray: '#5B667A',
-                            danger: '#B91C1C',
-                            'danger-light': '#FEF2F2',
-                            success: '#166534',
-                            'success-light': '#F0FDF4',
-                            warning: '#92400E',
-                            'warning-light': '#FFFBEB',
-                            'info-light': '#EFF6FF'
+                            gray: '#8D99AE'
                         }
                     }
                 }
@@ -49,20 +42,12 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+    
+    <!-- LocalForage (IndexedDB Wrapper para armazenamento ilimitado) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
 
     <style>
         body { background-color: #F4F6F9; font-family: 'Montserrat', sans-serif; box-sizing: border-box; }
-        .sr-only {
-            position: absolute;
-            width: 1px;
-            height: 1px;
-            padding: 0;
-            margin: -1px;
-            overflow: hidden;
-            clip: rect(0, 0, 0, 0);
-            white-space: nowrap;
-            border: 0;
-        }
         .hide-on-pdf { display: block; }
         
         /* --- MODO PDF EXECUTIVO NORMATIZADO E BLINDADO --- */
@@ -147,26 +132,17 @@
 
         /* Estilo do modal de Crop */
         .cropper-view-box, .cropper-face { border-radius: 0; }
-
-        @media (prefers-reduced-motion: reduce) {
-            *, *::before, *::after {
-                animation-duration: 0.01ms !important;
-                animation-iteration-count: 1 !important;
-                scroll-behavior: auto !important;
-                transition-duration: 0.01ms !important;
-            }
-        }
     </style>
 </head>
 <body class="text-brand-dark antialiased min-h-screen pb-12 font-sans">
 
     <!-- Pré-carregamento Seguro da Logo FIEG -->
-    <img src="https://i.postimg.cc/HWKTMyKs/sistema-fieg-02.png" crossorigin="anonymous" class="hidden" id="preload-fieg-logo" alt="" aria-hidden="true">
+    <img src="https://i.postimg.cc/HWKTMyKs/sistema-fieg-02.png" crossorigin="anonymous" class="hidden" id="preload-fieg-logo" alt="preload">
 
     <!-- Overlay de Loading -->
-    <div id="pdf-loading" class="fixed inset-0 bg-white bg-opacity-90 z-[999] hidden flex-col items-center justify-center" role="status" aria-live="polite" aria-atomic="true" aria-labelledby="pdf-loading-title" aria-describedby="pdf-loading-text" aria-hidden="true">
-        <i class="ph ph-spinner animate-spin text-6xl text-brand-blue mb-4" aria-hidden="true"></i>
-        <h2 class="text-2xl font-bold text-brand-dark" id="pdf-loading-title">Gerando Relatório Oficial...</h2>
+    <div id="pdf-loading" class="fixed inset-0 bg-white bg-opacity-90 z-[999] hidden flex-col items-center justify-center">
+        <i class="ph ph-spinner animate-spin text-6xl text-brand-blue mb-4"></i>
+        <h2 class="text-2xl font-bold text-brand-dark">A gerar Relatório Oficial...</h2>
         <p class="text-brand-gray mt-2 font-semibold italic" id="pdf-loading-text">Validando métricas, tipografia e blindando páginas.</p>
     </div>
 
@@ -177,7 +153,7 @@
         <header class="flex flex-col md:flex-row justify-between items-start border-b-2 border-brand-blue pb-6 mb-8 bg-white/90 p-6 rounded-xl shadow-sm hide-on-pdf">
             <div class="flex-1">
                 <div class="flex items-center gap-3 mb-2">
-                    <i class="ph-fill ph-buildings text-3xl text-brand-blue" aria-hidden="true"></i>
+                    <i class="ph-fill ph-buildings text-3xl text-brand-blue"></i>
                     <h1 class="text-3xl md:text-4xl font-black text-brand-blue tracking-tight">INFORME EXECUTIVO</h1>
                 </div>
                 <p class="text-brand-gray font-bold text-lg">
@@ -193,11 +169,11 @@
                 
                 <div class="flex gap-3 mt-2">
                     <button onclick="openModal()" class="flex items-center gap-2 bg-white border border-brand-blue text-brand-blue font-semibold py-2 px-4 rounded-lg shadow-sm hover:bg-gray-50 transition-colors">
-                        <i class="ph ph-magic-wand text-xl" aria-hidden="true"></i>
+                        <i class="ph ph-magic-wand text-xl"></i>
                         Importar Relatório
                     </button>
                     <button onclick="exportToPDF()" class="flex items-center gap-2 bg-brand-blue text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:bg-blue-900 transition-colors" id="btn-export">
-                        <i class="ph ph-file-pdf text-xl" aria-hidden="true"></i>
+                        <i class="ph ph-file-pdf text-xl"></i>
                         Gerar PDF Oficial
                     </button>
                 </div>
@@ -212,14 +188,14 @@
 
         <!-- Filtros em Tempo Real -->
         <div class="bg-white p-5 rounded-xl shadow-sm mb-10 flex flex-col gap-4 border border-gray-100 hide-on-pdf" id="filters-container">
-            <h3 class="text-brand-blue font-bold border-b border-gray-100 pb-2 mb-2"><i class="ph-bold ph-funnel" aria-hidden="true"></i> Filtros de Pauta</h3>
+            <h3 class="text-brand-blue font-bold border-b border-gray-100 pb-2 mb-2"><i class="ph-bold ph-funnel"></i> Filtros de Pauta</h3>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 w-full">
                 <div>
-                    <label for="filter-unit-text" class="block text-xs font-bold text-brand-gray uppercase mb-1">Buscar Unidade</label>
+                    <label class="block text-xs font-bold text-brand-gray uppercase mb-1">Buscar Unidade</label>
                     <input type="text" id="filter-unit-text" onkeyup="applyFilters()" placeholder="Ex: Canaã, Jaiara..." class="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-brand-blue font-medium bg-gray-50 hover:bg-white transition">
                 </div>
                 <div>
-                    <label for="filter-type" class="block text-xs font-bold text-brand-gray uppercase mb-1">Eixo de Atuação</label>
+                    <label class="block text-xs font-bold text-brand-gray uppercase mb-1">Eixo de Atuação</label>
                     <select id="filter-type" onchange="applyFilters()" class="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-brand-blue font-medium bg-gray-50 hover:bg-white transition cursor-pointer">
                         <option value="all">Todos os Eixos</option>
                         <option value="Educação e Qualificação">Educação e Qualificação</option>
@@ -228,28 +204,28 @@
                         <option value="Relações Institucionais">Relações Institucionais</option>
                     </select>
                 </div>
-                <fieldset>
-                    <legend class="block text-xs font-bold text-brand-gray uppercase mb-1">Intervalo de Meses</legend>
+                <div>
+                    <label class="block text-xs font-bold text-brand-gray uppercase mb-1">Intervalo de Meses</label>
                     <div class="flex gap-2">
-                        <input type="month" id="filter-start-month" onchange="applyFilters()" aria-label="Mês inicial" class="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-brand-blue font-medium bg-gray-50 hover:bg-white transition cursor-pointer">
-                        <input type="month" id="filter-end-month" onchange="applyFilters()" aria-label="Mês final" class="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-brand-blue font-medium bg-gray-50 hover:bg-white transition cursor-pointer">
+                        <input type="month" id="filter-start-month" onchange="applyFilters()" title="Mês Inicial" class="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-brand-blue font-medium bg-gray-50 hover:bg-white transition cursor-pointer">
+                        <input type="month" id="filter-end-month" onchange="applyFilters()" title="Mês Final" class="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-brand-blue font-medium bg-gray-50 hover:bg-white transition cursor-pointer">
                     </div>
-                </fieldset>
-                <fieldset>
-                    <legend class="block text-xs font-bold text-brand-gray uppercase mb-1">Datas Específicas</legend>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-brand-gray uppercase mb-1">Datas Específicas</label>
                     <div class="flex gap-2">
-                        <input type="date" id="filter-start-date" onchange="applyFilters()" aria-label="Data inicial" class="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-brand-blue font-medium bg-gray-50 hover:bg-white transition cursor-pointer">
-                        <input type="date" id="filter-end-date" onchange="applyFilters()" aria-label="Data final" class="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-brand-blue font-medium bg-gray-50 hover:bg-white transition cursor-pointer">
+                        <input type="date" id="filter-start-date" onchange="applyFilters()" title="Data Inicial" class="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-brand-blue font-medium bg-gray-50 hover:bg-white transition cursor-pointer">
+                        <input type="date" id="filter-end-date" onchange="applyFilters()" title="Data Final" class="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-brand-blue font-medium bg-gray-50 hover:bg-white transition cursor-pointer">
                     </div>
-                </fieldset>
+                </div>
             </div>
             
             <div class="flex justify-between items-center w-full mt-2 border-t border-gray-100 pt-4">
-                <button onclick="clearAllData()" class="text-brand-danger hover:text-red-800 transition-colors font-bold text-sm flex items-center gap-1" title="Zerar Banco de Dados">
-                    <i class="ph-bold ph-trash" aria-hidden="true"></i> Apagar Todos os Dados
+                <button onclick="clearAllData()" class="text-red-500 hover:text-red-700 transition-colors font-bold text-sm flex items-center gap-1" title="Zerar Banco de Dados">
+                    <i class="ph-bold ph-trash"></i> Apagar Todos os Dados
                 </button>
-                <button onclick="clearFilters()" class="bg-gray-100 text-gray-700 border border-gray-300 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors font-bold text-sm flex items-center gap-1" title="Limpar Filtros e Ver Tudo">
-                    <i class="ph-bold ph-arrows-counter-clockwise" aria-hidden="true"></i> Redefinir Filtros
+                <button onclick="clearFilters()" class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition-colors font-bold text-sm flex items-center gap-1" title="Limpar Filtros e Ver Tudo">
+                    <i class="ph-bold ph-arrows-counter-clockwise"></i> Redefinir Filtros
                 </button>
             </div>
         </div>
@@ -263,38 +239,38 @@
     </div>
 
     <!-- Modal de Importação -->
-    <div id="import-modal" class="fixed inset-0 bg-brand-dark bg-opacity-80 z-50 hidden flex items-center justify-center p-4 hide-on-pdf backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="import-modal-title" aria-hidden="true" tabindex="-1">
+    <div id="import-modal" class="fixed inset-0 bg-brand-dark bg-opacity-80 z-50 hidden flex items-center justify-center p-4 hide-on-pdf backdrop-blur-sm">
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-6xl h-[85vh] flex flex-col overflow-hidden">
             <div class="p-5 border-b border-gray-200 flex justify-between items-center bg-gray-50">
-                <h3 class="text-2xl font-bold text-brand-blue flex items-center gap-2" id="import-modal-title">
-                    <i class="ph-fill ph-magic-wand" aria-hidden="true"></i> Redator Especialista e Importador
+                <h3 class="text-2xl font-bold text-brand-blue flex items-center gap-2">
+                    <i class="ph-fill ph-magic-wand"></i> Redator Especialista e Importador
                 </h3>
-                <button onclick="closeModal()" class="text-gray-600 hover:text-brand-danger transition-colors bg-white p-2 rounded-full shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-blue focus:ring-offset-2" aria-label="Fechar importador">
-                    <i class="ph-bold ph-x text-xl" aria-hidden="true"></i>
+                <button onclick="closeModal()" class="text-gray-500 hover:text-brand-red transition-colors bg-white p-2 rounded-full shadow-sm">
+                    <i class="ph-bold ph-x text-xl"></i>
                 </button>
             </div>
             
             <div class="p-6 overflow-y-auto flex-grow bg-gray-100" id="modal-body">
                 <div id="stage-upload" class="h-full flex flex-col items-center justify-center">
-                    <input type="file" id="word-upload" accept=".docx" multiple class="sr-only peer" onchange="processWordFiles(event)" aria-describedby="upload-help upload-limits">
-                    <label for="word-upload" class="p-10 border-2 border-dashed border-brand-blue rounded-2xl bg-white text-center w-full max-w-xl cursor-pointer hover:bg-brand-info-light transition-all shadow-sm peer-focus-visible:ring-4 peer-focus-visible:ring-brand-blue peer-focus-visible:ring-offset-2">
-                        <span class="block"><i class="ph-fill ph-file-doc text-7xl text-brand-blue mb-4" aria-hidden="true"></i></span>
-                        <span class="block text-xl font-bold text-brand-blue" id="upload-feedback">Selecionar arquivos Word (.docx)</span>
-                        <span class="block text-sm text-gray-600 mt-2" id="upload-help">A ferramenta fará a limpeza aplicando as Normas Editoriais Semânticas.</span>
-                        <span class="block text-xs text-brand-gray mt-4 text-left max-w-xs mx-auto" id="upload-limits">
-                            Títulos: máx. 200 caracteres<br>
-                            Sínteses (Lead): máx. 500 caracteres<br>
-                            Corpo: máx. 1500 caracteres<br>
-                            Imagens centralizadas em Widescreen 2:1
-                        </span>
-                    </label>
+                    <div class="p-10 border-2 border-dashed border-brand-blue rounded-2xl bg-white text-center w-full max-w-xl cursor-pointer hover:bg-blue-50 transition-all shadow-sm" onclick="document.getElementById('word-upload').click()">
+                        <input type="file" id="word-upload" accept=".docx" multiple class="hidden" onchange="processWordFiles(event)">
+                        <i class="ph-fill ph-file-doc text-7xl text-brand-blue mb-4"></i>
+                        <h4 class="text-xl font-bold text-brand-blue" id="upload-feedback">Selecionar ficheiros Word (.docx)</h4>
+                        <p class="text-sm text-gray-500 mt-2">A I.A. fará a limpeza aplicando as Normas Editoriais Semânticas.</p>
+                        <ul class="text-xs text-brand-gray mt-4 list-disc text-left max-w-xs mx-auto">
+                            <li>Títulos: máx. 200 caracteres</li>
+                            <li>Sínteses (Lead): máx. 500 caracteres</li>
+                            <li>Corpo: máx. 1500 caracteres</li>
+                            <li>Imagens centralizadas em Widescreen 2:1</li>
+                        </ul>
+                    </div>
                 </div>
 
                 <div id="stage-review" class="hidden">
                     <div class="flex justify-between items-center mb-4 bg-white p-4 rounded-xl shadow-sm border border-gray-200">
                         <h4 class="text-lg font-bold text-brand-dark"><span id="review-count">0</span> Pautas prontas para revisão.</h4>
                         <button onclick="saveAllParsedReports(event)" class="bg-brand-blue text-white px-6 py-2 rounded-lg font-bold shadow-md hover:bg-blue-900 transition flex items-center gap-2">
-                            <i class="ph-fill ph-check-circle" aria-hidden="true"></i> Aprovar e Publicar
+                            <i class="ph-fill ph-check-circle"></i> Aprovar e Publicar
                         </button>
                     </div>
                     <div id="parsed-cards-container" class="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -306,26 +282,26 @@
     </div>
 
     <!-- Modal do Cropper (Ferramenta de Enquadramento) -->
-    <div id="crop-modal" class="fixed inset-0 bg-brand-dark bg-opacity-95 z-[2000] hidden flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="crop-modal-title" aria-describedby="crop-modal-help" aria-hidden="true" tabindex="-1">
+    <div id="crop-modal" class="fixed inset-0 bg-brand-dark bg-opacity-95 z-[2000] hidden flex items-center justify-center p-4">
         <div class="bg-white rounded-xl shadow-2xl w-full max-w-5xl flex flex-col overflow-hidden">
             <div class="p-4 border-b border-gray-200 flex justify-between items-center bg-gray-50">
-                <h3 class="text-xl font-bold text-brand-blue flex items-center gap-2" id="crop-modal-title">
-                    <i class="ph-bold ph-crop" aria-hidden="true"></i> Ajustar Enquadramento Fotográfico
+                <h3 class="text-xl font-bold text-brand-blue flex items-center gap-2">
+                    <i class="ph-bold ph-crop"></i> Ajustar Enquadramento Fotográfico
                 </h3>
-                <button onclick="closeCropModal()" class="text-gray-600 hover:text-brand-danger transition focus:outline-none focus:ring-2 focus:ring-brand-blue focus:ring-offset-2" aria-label="Fechar ajuste de imagem"><i class="ph-bold ph-x text-xl" aria-hidden="true"></i></button>
+                <button onclick="closeCropModal()" class="text-gray-500 hover:text-brand-red transition"><i class="ph-bold ph-x text-xl"></i></button>
             </div>
             <div class="p-6 bg-gray-200 flex justify-center items-center h-[60vh] max-h-[600px] overflow-hidden">
                 <!-- Imagem Target do Cropper -->
-                <img id="crop-image-target" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==" alt="Imagem selecionada para ajuste de enquadramento" style="display: block; max-width: 100%; max-height: 100%;">
+                <img id="crop-image-target" src="" style="display: block; max-width: 100%; max-height: 100%;">
             </div>
             <div class="p-4 border-t border-gray-200 flex justify-between items-center bg-white">
-                <p class="text-sm font-semibold text-brand-gray hidden md:block" id="crop-modal-help">
-                    <i class="ph-fill ph-info" aria-hidden="true"></i> Arraste a imagem ou redimensione a área de corte. A proporção está travada para o PDF oficial (1000x500).
+                <p class="text-sm font-semibold text-brand-gray hidden md:block">
+                    <i class="ph-fill ph-info"></i> Arraste a imagem ou redimensione a área de corte. A proporção está travada para o PDF oficial (1000x500).
                 </p>
                 <div class="flex gap-3">
-                    <button onclick="closeCropModal()" class="px-5 py-2 bg-gray-100 border border-gray-300 text-gray-700 font-bold rounded-lg hover:bg-gray-200 transition">Cancelar</button>
+                    <button onclick="closeCropModal()" class="px-5 py-2 bg-gray-200 text-gray-700 font-bold rounded-lg hover:bg-gray-300 transition">Cancelar</button>
                     <button onclick="applyCrop()" class="px-5 py-2 bg-brand-blue text-white font-bold rounded-lg hover:bg-blue-800 transition shadow-md flex items-center gap-2">
-                        <i class="ph-bold ph-check" aria-hidden="true"></i> Aplicar Corte
+                        <i class="ph-bold ph-check"></i> Aplicar Corte
                     </button>
                 </div>
             </div>
@@ -333,30 +309,30 @@
     </div>
 
     <!-- Modal de Edição Individual -->
-    <div id="edit-single-modal" class="fixed inset-0 bg-brand-dark bg-opacity-80 z-50 hidden flex items-center justify-center p-4 hide-on-pdf backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="edit-single-modal-title" aria-hidden="true" tabindex="-1">
+    <div id="edit-single-modal" class="fixed inset-0 bg-brand-dark bg-opacity-80 z-50 hidden flex items-center justify-center p-4 hide-on-pdf backdrop-blur-sm">
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl h-auto max-h-[95vh] flex flex-col overflow-hidden">
             <div class="p-5 border-b border-gray-200 flex justify-between items-center bg-gray-50">
-                <h3 class="text-xl font-bold text-brand-blue flex items-center gap-2" id="edit-single-modal-title">
-                    <i class="ph-fill ph-pencil-simple" aria-hidden="true"></i> Editar Matéria (Padrão Normatizado)
+                <h3 class="text-xl font-bold text-brand-blue flex items-center gap-2">
+                    <i class="ph-fill ph-pencil-simple"></i> Editar Matéria (Padrão Normatizado)
                 </h3>
-                <button onclick="closeEditModal()" class="text-gray-600 hover:text-brand-danger transition-colors bg-white p-2 rounded-full shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-blue focus:ring-offset-2" aria-label="Fechar edição da matéria">
-                    <i class="ph-bold ph-x text-xl" aria-hidden="true"></i>
+                <button onclick="closeEditModal()" class="text-gray-500 hover:text-brand-red transition-colors bg-white p-2 rounded-full shadow-sm">
+                    <i class="ph-bold ph-x text-xl"></i>
                 </button>
             </div>
             <div class="p-6 overflow-y-auto flex-grow bg-white space-y-4 font-sans">
                 <input type="hidden" id="edit-single-id">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label for="edit-single-unit" class="block text-[10px] font-bold text-brand-gray uppercase mb-1">Unidade</label>
+                        <label class="block text-[10px] font-bold text-brand-gray uppercase mb-1">Unidade</label>
                         <input type="text" id="edit-single-unit" class="w-full border border-gray-300 rounded p-2 focus:outline-none focus:ring-2 focus:ring-brand-blue font-bold uppercase text-sm">
                     </div>
                     <div>
-                        <label for="edit-single-date" class="block text-[10px] font-bold text-brand-gray uppercase mb-1">Data da Ação</label>
+                        <label class="block text-[10px] font-bold text-brand-gray uppercase mb-1">Data da Ação</label>
                         <input type="date" id="edit-single-date" class="w-full border border-gray-300 rounded p-2 focus:outline-none focus:ring-2 focus:ring-brand-blue text-sm font-bold text-brand-dark">
                     </div>
                 </div>
                 <div>
-                    <label for="edit-single-type" class="block text-[10px] font-bold text-brand-gray uppercase mb-1">Eixo Estratégico</label>
+                    <label class="block text-[10px] font-bold text-brand-gray uppercase mb-1">Eixo Estratégico</label>
                     <select id="edit-single-type" class="w-full border border-gray-300 rounded p-2 focus:outline-none focus:ring-2 focus:ring-brand-blue text-sm">
                         <option value="Educação e Qualificação">Educação e Qualificação</option>
                         <option value="Saúde e Segurança">Saúde e Segurança</option>
@@ -365,168 +341,76 @@
                     </select>
                 </div>
                 <div>
-                    <label for="edit-single-title" class="flex justify-between text-[10px] font-bold text-brand-gray uppercase mb-1"><span>Manchete Executiva (Título Curto)</span> <span id="count-title" class="text-brand-red" aria-live="polite"></span></label>
+                    <label class="flex justify-between text-[10px] font-bold text-brand-gray uppercase mb-1"><span>Manchete Executiva (Título Curto)</span> <span id="count-title" class="text-brand-red"></span></label>
                     <input type="text" id="edit-single-title" maxlength="200" oninput="document.getElementById('count-title').innerText = this.value.length + '/200';" class="w-full border border-gray-300 rounded p-2 focus:outline-none focus:ring-2 focus:ring-brand-blue font-bold text-lg text-brand-dark">
                 </div>
                 <div>
-                    <label for="edit-single-lead" class="flex justify-between text-[10px] font-bold text-brand-gray uppercase mb-1"><span>Síntese Estratégica (Lead)</span> <span id="count-lead" class="text-brand-red" aria-live="polite"></span></label>
-                    <textarea id="edit-single-lead" rows="2" maxlength="500" oninput="document.getElementById('count-lead').innerText = this.value.length + '/500';" class="w-full border border-red-200 rounded p-3 focus:outline-none focus:ring-2 focus:ring-brand-blue text-sm text-brand-dark font-semibold leading-relaxed bg-red-50"></textarea>
+                    <label class="flex justify-between text-[10px] font-bold text-brand-gray uppercase mb-1"><span>Síntese Estratégica (Lead)</span> <span id="count-lead" class="text-brand-red"></span></label>
+                    <textarea id="edit-single-lead" rows="2" maxlength="500" oninput="document.getElementById('count-lead').innerText = this.value.length + '/500';" class="w-full border border-gray-300 rounded p-3 focus:outline-none focus:ring-2 focus:ring-brand-blue text-sm text-brand-dark font-semibold leading-relaxed bg-gray-50 border-l-4 border-l-brand-red"></textarea>
                 </div>
                 <div>
-                    <label for="edit-single-content" class="flex justify-between text-[10px] font-bold text-brand-gray uppercase mb-1"><span>Corpo Institucional (Detalhes)</span> <span id="count-content" class="text-brand-red" aria-live="polite"></span></label>
-                    <textarea id="edit-single-content" rows="6" maxlength="1500" oninput="document.getElementById('count-content').innerText = this.value.length + '/1500';" class="w-full border border-gray-300 rounded p-3 focus:outline-none focus:ring-2 focus:ring-brand-blue text-gray-800 leading-relaxed resize-none"></textarea>
+                    <label class="flex justify-between text-[10px] font-bold text-brand-gray uppercase mb-1"><span>Corpo Institucional (Detalhes)</span> <span id="count-content" class="text-brand-red"></span></label>
+                    <textarea id="edit-single-content" rows="6" maxlength="1500" oninput="document.getElementById('count-content').innerText = this.value.length + '/1500';" class="w-full border border-gray-300 rounded p-3 focus:outline-none text-gray-800 leading-relaxed resize-none"></textarea>
                 </div>
             </div>
             <div class="p-4 border-t border-gray-200 bg-gray-50 flex justify-end gap-3">
                 <button onclick="closeEditModal()" class="px-5 py-2 text-gray-600 font-bold hover:bg-gray-200 rounded-lg transition">Cancelar</button>
                 <button onclick="saveEditedReport()" class="px-5 py-2 bg-brand-blue text-white font-bold rounded-lg hover:bg-blue-900 shadow-md transition flex items-center gap-2">
-                    <i class="ph-fill ph-check-circle" aria-hidden="true"></i> Atualizar Matéria
+                    <i class="ph-fill ph-check-circle"></i> Atualizar Matéria
                 </button>
             </div>
         </div>
     </div>
 
     <!-- Modal de Confirmação -->
-    <div id="custom-confirm-modal" class="fixed inset-0 bg-brand-dark bg-opacity-80 z-[1000] hidden flex items-center justify-center p-4 hide-on-pdf backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="confirm-modal-title" aria-describedby="confirm-modal-text" aria-hidden="true" tabindex="-1">
+    <div id="custom-confirm-modal" class="fixed inset-0 bg-brand-dark bg-opacity-80 z-[1000] hidden flex items-center justify-center p-4 hide-on-pdf backdrop-blur-sm">
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md flex flex-col overflow-hidden">
-            <div class="p-5 border-b border-gray-200 flex justify-between items-center bg-brand-danger-light">
-                <h3 id="confirm-modal-title" class="text-xl font-bold text-brand-danger flex items-center gap-2">
-                    <i class="ph-fill ph-warning-circle" aria-hidden="true"></i> <span id="confirm-modal-title-text">Atenção</span>
+            <div class="p-5 border-b border-gray-200 flex justify-between items-center bg-red-50">
+                <h3 id="confirm-modal-title" class="text-xl font-bold text-brand-red flex items-center gap-2">
+                    <i class="ph-fill ph-warning-circle"></i> Atenção
                 </h3>
-                <button onclick="closeConfirmModal()" class="text-gray-600 hover:text-brand-danger transition-colors bg-white p-2 rounded-full shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-blue focus:ring-offset-2" aria-label="Fechar confirmação">
-                    <i class="ph-bold ph-x text-xl" aria-hidden="true"></i>
+                <button onclick="closeConfirmModal()" class="text-gray-500 hover:text-brand-red transition-colors bg-white p-2 rounded-full shadow-sm">
+                    <i class="ph-bold ph-x text-xl"></i>
                 </button>
             </div>
             <div class="p-6 bg-white">
                 <p id="confirm-modal-text" class="text-gray-700 font-medium text-center text-lg"></p>
             </div>
             <div class="p-4 border-t border-gray-200 bg-gray-50 flex justify-end gap-3">
-                <button onclick="closeConfirmModal()" class="px-5 py-2 text-gray-600 font-bold hover:bg-gray-200 rounded-lg transition" id="confirm-cancel-button">Cancelar</button>
-                <button onclick="executeConfirmAction()" class="px-5 py-2 bg-brand-danger text-white font-bold rounded-lg hover:bg-red-800 shadow-md transition flex items-center gap-2" id="confirm-action-button">
-                    <i class="ph-bold ph-trash" aria-hidden="true"></i> Sim, Apagar
+                <button onclick="closeConfirmModal()" class="px-5 py-2 text-gray-600 font-bold hover:bg-gray-200 rounded-lg transition">Cancelar</button>
+                <button onclick="executeConfirmAction()" class="px-5 py-2 bg-brand-red text-white font-bold rounded-lg hover:bg-red-700 shadow-md transition flex items-center gap-2">
+                    <i class="ph-bold ph-trash"></i> Sim, Apagar
                 </button>
             </div>
         </div>
     </div>
 
     <script>
-        // --- PREVENÇÃO DE ERROS DE DECLARAÇÃO E MEMÓRIA (V34) ---
-        // Variáveis em VAR garantem funcionamento no live-reload
+        // --- PREVENÇÃO DE ERROS DE DECLARAÇÃO E NOVA BASE DE DADOS (INDEXEDDB) ---
         var reports = [];
-        try {
-            reports = JSON.parse(localStorage.getItem('fiegReportsV34')) || [];
-        } catch(e) {
-            reports = [];
-        }
         var parsedReportsCache = []; 
-        var dialogStack = [];
-        var focusableDialogSelector = 'a[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
-
-        function escapeHtml(value) {
-            return String(value ?? '').replace(/[&<>"']/g, (char) => ({
-                '&': '&amp;',
-                '<': '&lt;',
-                '>': '&gt;',
-                '"': '&quot;',
-                "'": '&#39;'
-            }[char]));
-        }
-
-        function getActiveDialog() {
-            for (let i = dialogStack.length - 1; i >= 0; i--) {
-                if (!dialogStack[i].dialog.classList.contains('hidden')) return dialogStack[i].dialog;
-            }
-            return null;
-        }
-
-        function getFocusableDialogElements(dialog) {
-            return Array.from(dialog.querySelectorAll(focusableDialogSelector))
-                .filter((element) => !element.closest('.hidden') && element.getAttribute('aria-hidden') !== 'true');
-        }
-
-        function setPageInert(isInert) {
-            const page = document.getElementById('executive-dashboard');
-            if (!page) return;
-            if (isInert) {
-                page.setAttribute('inert', '');
-            } else {
-                page.removeAttribute('inert');
-            }
-        }
-
-        function openAccessibleDialog(dialogId, initialFocusSelector) {
-            const dialog = document.getElementById(dialogId);
-            if (!dialog) return;
-            if (!dialogStack.some((entry) => entry.dialog === dialog)) {
-                dialogStack.push({ dialog, returnTo: document.activeElement });
-            }
-            dialog.classList.remove('hidden');
-            dialog.setAttribute('aria-hidden', 'false');
-            setPageInert(true);
-            setTimeout(() => {
-                const preferredTarget = initialFocusSelector ? dialog.querySelector(initialFocusSelector) : null;
-                const focusTarget = preferredTarget || getFocusableDialogElements(dialog)[0] || dialog;
-                focusTarget.focus();
-            }, 0);
-        }
-
-        function closeAccessibleDialog(dialogId) {
-            const dialog = document.getElementById(dialogId);
-            if (!dialog) return;
-            dialog.classList.add('hidden');
-            dialog.setAttribute('aria-hidden', 'true');
-            const stackIndex = dialogStack.findIndex((entry) => entry.dialog === dialog);
-            const stackEntry = stackIndex >= 0 ? dialogStack.splice(stackIndex, 1)[0] : null;
-            const nextDialog = getActiveDialog();
-            if (nextDialog) {
-                const focusTarget = getFocusableDialogElements(nextDialog)[0] || nextDialog;
-                focusTarget.focus();
-            } else if (stackEntry?.returnTo && document.contains(stackEntry.returnTo)) {
-                setPageInert(false);
-                stackEntry.returnTo.focus();
-            } else {
-                setPageInert(false);
-            }
-        }
-
-        function closeTopDialog() {
-            const activeDialog = getActiveDialog();
-            if (!activeDialog) return;
-            if (activeDialog.id === 'import-modal') window.closeModal();
-            if (activeDialog.id === 'crop-modal') window.closeCropModal();
-            if (activeDialog.id === 'edit-single-modal') window.closeEditModal();
-            if (activeDialog.id === 'custom-confirm-modal') window.closeConfirmModal();
-        }
-
-        document.addEventListener('keydown', (event) => {
-            const activeDialog = getActiveDialog();
-            if (!activeDialog) return;
-            if (event.key === 'Escape') {
-                event.preventDefault();
-                closeTopDialog();
-                return;
-            }
-            if (event.key !== 'Tab') return;
-            const focusableElements = getFocusableDialogElements(activeDialog);
-            if (focusableElements.length === 0) {
-                event.preventDefault();
-                activeDialog.focus();
-                return;
-            }
-            const firstElement = focusableElements[0];
-            const lastElement = focusableElements[focusableElements.length - 1];
-            if (event.shiftKey && document.activeElement === firstElement) {
-                event.preventDefault();
-                lastElement.focus();
-            } else if (!event.shiftKey && document.activeElement === lastElement) {
-                event.preventDefault();
-                firstElement.focus();
-            }
-        });
 
         document.getElementById('current-date-display').innerText = new Intl.DateTimeFormat('pt-BR', { dateStyle: 'long' }).format(new Date());
 
-        window.onload = () => { 
+        // Inicialização Assíncrona para o localForage (IndexedDB)
+        window.onload = async () => { 
+            try {
+                // Tenta carregar a base de dados robusta do IndexedDB
+                reports = await localforage.getItem('fiegReportsDb') || [];
+                
+                // Rotina de Migração Segura: Se o IndexedDB estiver vazio, mas existir dados antigos no localStorage (V34)
+                if (reports.length === 0) {
+                    const oldData = localStorage.getItem('fiegReportsV34');
+                    if (oldData) {
+                        reports = JSON.parse(oldData);
+                        await localforage.setItem('fiegReportsDb', reports);
+                        console.log("Migração do localStorage para IndexedDB concluída com sucesso.");
+                    }
+                }
+            } catch (e) {
+                console.warn("⚠️ Não foi possível carregar a base de dados local.", e);
+                reports = [];
+            }
             setTimeout(() => { applyFilters(); }, 100);
         }
 
@@ -534,14 +418,14 @@
         var pendingConfirmAction = null;
 
         window.openConfirmModal = function(title, text, callback) {
-            document.getElementById('confirm-modal-title-text').innerText = title;
+            document.getElementById('confirm-modal-title').innerHTML = `<i class="ph-fill ph-warning-circle"></i> ${title}`;
             document.getElementById('confirm-modal-text').innerText = text;
             pendingConfirmAction = callback;
-            openAccessibleDialog('custom-confirm-modal', '#confirm-cancel-button');
+            document.getElementById('custom-confirm-modal').classList.remove('hidden');
         }
 
         window.closeConfirmModal = function() {
-            closeAccessibleDialog('custom-confirm-modal');
+            document.getElementById('custom-confirm-modal').classList.add('hidden');
             pendingConfirmAction = null;
         }
 
@@ -561,14 +445,14 @@
             let item = fromCache ? parsedReportsCache.find(r => r.id === id) : reports.find(r => r.id === id);
             
             if (!item || !item.originalImage) {
-                alert("A imagem original foi descartada para otimizar a memória do sistema e evitar travamentos.\nPara reenquadrar a foto, exclua esta matéria e importe o arquivo Word novamente.");
+                alert("A imagem original foi descartada para otimizar a memória.\nPara reenquadrar a foto, exclua esta matéria e importe o ficheiro Word novamente.");
                 return;
             }
 
             const imgTarget = document.getElementById('crop-image-target');
             imgTarget.src = item.originalImage;
             
-            openAccessibleDialog('crop-modal', 'button[onclick="applyCrop()"]');
+            document.getElementById('crop-modal').classList.remove('hidden');
 
             if (currentCropper) {
                 currentCropper.destroy();
@@ -592,14 +476,14 @@
         }
 
         window.closeCropModal = function() {
-            closeAccessibleDialog('crop-modal');
+            document.getElementById('crop-modal').classList.add('hidden');
             if (currentCropper) {
                 currentCropper.destroy();
                 currentCropper = null;
             }
         }
 
-        window.applyCrop = function() {
+        window.applyCrop = async function() {
             if (!currentCropper) return;
             
             const canvas = currentCropper.getCroppedCanvas({
@@ -609,7 +493,7 @@
                 imageSmoothingQuality: 'high',
             });
             
-            const newImageBase64 = canvas.toDataURL('image/jpeg', 0.85); // Mantem otimizado
+            const newImageBase64 = canvas.toDataURL('image/jpeg', 0.85); 
             
             if (isEditingFromCache) {
                 let item = parsedReportsCache.find(r => r.id === currentCropId);
@@ -622,9 +506,10 @@
                 if (item) {
                     item.image = newImageBase64;
                     try {
-                        localStorage.setItem('fiegReportsV34', JSON.stringify(reports));
+                        // Utiliza o novo IndexedDB ilimitado
+                        await localforage.setItem('fiegReportsDb', reports);
                     } catch(e) {
-                        alert("⚠️ Limite de Memória Atingido.\nA alteração foi aplicada visualmente, mas não pôde ser salva. Limpe relatórios antigos.");
+                        alert("⚠️ Erro Crítico ao guardar as alterações na base de dados.");
                     }
                     applyFilters();
                 }
@@ -633,27 +518,25 @@
             closeCropModal();
         }
 
-        // Processamento de Imagem com COMPRESSÃO EXTREMA para evitar o "App Freeze"
+        // Processamento de Imagem
         function processImageForStorage(base64Str) {
             return new Promise((resolve) => {
                 if(!base64Str) { resolve({ original: null, cropped: null }); return; }
                 const img = new Image(); 
                 img.src = base64Str;
                 img.onload = () => { 
-                    // 1. Imagem Original (Para o Cropper) - Compressão Máxima para poupar a memória do Storage
                     const origCanvas = document.createElement('canvas');
                     let oW = img.width;
                     let oH = img.height;
-                    const MAX_ORIG = 800; // Reduzido drasticamente para estabilidade
+                    const MAX_ORIG = 800; 
                     if (oW > oH && oW > MAX_ORIG) { oH *= MAX_ORIG / oW; oW = MAX_ORIG; }
                     else if (oH > MAX_ORIG) { oW *= MAX_ORIG / oH; oH = MAX_ORIG; }
                     origCanvas.width = oW;
                     origCanvas.height = oH;
                     const origCtx = origCanvas.getContext('2d');
                     origCtx.drawImage(img, 0, 0, oW, oH);
-                    const originalImage = origCanvas.toDataURL('image/jpeg', 0.50); // Qualidade a 50% para guardar histórico
+                    const originalImage = origCanvas.toDataURL('image/jpeg', 0.50); 
 
-                    // 2. Recorte 1000x500 Automático
                     const cropCanvas = document.createElement('canvas'); 
                     cropCanvas.width = 1000; 
                     cropCanvas.height = 500; 
@@ -662,7 +545,7 @@
                     const x = (cropCanvas.width / 2) - (img.width / 2) * scale;
                     const y = (cropCanvas.height / 2) - (img.height / 2) * scale;
                     cropCtx.drawImage(img, x, y, img.width * scale, img.height * scale); 
-                    const croppedImage = cropCanvas.toDataURL('image/jpeg', 0.70); // Qualidade segura para PDF
+                    const croppedImage = cropCanvas.toDataURL('image/jpeg', 0.70); 
 
                     resolve({ original: originalImage, cropped: croppedImage });
                 }; 
@@ -780,10 +663,18 @@
             window.openConfirmModal(
                 "Apagar Todos os Dados",
                 "Deseja apagar todos os relatórios cadastrados no sistema? Esta ação limpará o seu histórico e não poderá ser desfeita.",
-                () => {
-                    localStorage.removeItem('fiegReportsV34');
+                async () => {
+                    // Limpeza profunda na base de dados ilimitada
+                    await localforage.clear();
+                    
+                    // Limpeza do localStorage antigo por garantia
+                    localStorage.clear();
+                    
                     reports = [];
                     applyFilters();
+                    
+                    // Atualiza a página para libertar memória RAM fantasma
+                    window.location.reload();
                 }
             );
         }
@@ -791,7 +682,7 @@
         async function processWordFiles(event) {
             const files = event.target.files;
             if (!files || files.length === 0) return;
-            document.getElementById('upload-feedback').innerText = "Processando e higienizando textos...";
+            document.getElementById('upload-feedback').innerText = "A processar e higienizar textos...";
             parsedReportsCache = [];
             for (let i = 0; i < files.length; i++) {
                 const arrayBuffer = await files[i].arrayBuffer();
@@ -859,7 +750,7 @@
                 }
             }
 
-            document.getElementById('upload-feedback').innerText = "Aplicando enquadramentos matemáticos...";
+            document.getElementById('upload-feedback').innerText = "A aplicar enquadramentos matemáticos...";
             const imagePromises = parsedReportsCache.map(async (item) => {
                 if (item.rawImage) {
                     const processed = await processImageForStorage(item.rawImage);
@@ -884,31 +775,23 @@
                 const card = document.createElement('div');
                 card.id = `parsed-card-${item.id}`;
                 card.className = 'bg-white p-5 rounded-xl shadow-sm border border-gray-200 flex flex-col relative group font-sans';
-                const safeUnit = escapeHtml(item.unit);
-                const safeDate = escapeHtml(item.date);
-                const safeTitle = escapeHtml(item.title);
-                const safeLead = escapeHtml(item.lead);
-                const safeContent = escapeHtml(item.content);
-                const safeType = escapeHtml(item.type);
-                const safeImage = escapeHtml(item.image);
-                const imageAlt = escapeHtml(item.title || item.unit || 'Imagem importada da pauta');
                 
                 let imgThumb = item.image ? `<div class="w-full h-32 bg-gray-50 flex items-center justify-center rounded-lg mb-3 overflow-hidden relative">
-                    <img src="${safeImage}" alt="${imageAlt}" class="max-w-full max-h-full object-cover">
-                    <button onclick="openCropModal('${item.id}', true)" class="absolute top-2 left-2 bg-white text-brand-blue p-2 rounded-full hover:bg-brand-blue hover:text-white transition shadow-md border border-gray-200 focus:outline-none focus:ring-2 focus:ring-brand-blue focus:ring-offset-2" aria-label="Ajustar enquadramento da imagem"><i class="ph-bold ph-crop" aria-hidden="true"></i></button>
-                    </div>` : `<div class="w-full h-32 bg-gray-100 flex items-center justify-center rounded-lg mb-3" aria-label="Pauta sem imagem"><i class="ph ph-image text-4xl text-brand-gray" aria-hidden="true"></i></div>`;
+                    <img src="${item.image}" class="max-w-full max-h-full object-cover">
+                    <button onclick="openCropModal('${item.id}', true)" class="absolute top-2 left-2 bg-white text-brand-blue p-2 rounded-full hover:bg-brand-blue hover:text-white transition shadow-md border border-gray-200" title="Ajustar Enquadramento Fotográfico"><i class="ph-bold ph-crop"></i></button>
+                    </div>` : `<div class="w-full h-32 bg-gray-100 flex items-center justify-center rounded-lg mb-3"><i class="ph ph-image text-4xl text-gray-300"></i></div>`;
                 
                 card.innerHTML = `
-                    <button onclick="removeParsedCard('${item.id}')" class="absolute top-2 right-2 bg-brand-danger-light text-brand-danger p-2 rounded-full hover:bg-red-100 transition opacity-100 sm:opacity-0 sm:group-hover:opacity-100 focus:opacity-100 z-10 shadow-sm border border-red-200 focus:outline-none focus:ring-2 focus:ring-brand-blue focus:ring-offset-2" aria-label="Excluir pauta desta importação"><i class="ph-bold ph-trash" aria-hidden="true"></i></button>
+                    <button onclick="removeParsedCard('${item.id}')" class="absolute top-2 right-2 bg-red-50 text-red-600 p-2 rounded-full hover:bg-red-200 transition opacity-0 group-hover:opacity-100 z-10 shadow-sm border border-red-100" title="Excluir desta importação"><i class="ph-bold ph-trash"></i></button>
                     ${imgThumb}
                     <div class="grid grid-cols-2 gap-2 mb-2">
-                        <div><label for="edit-unit-${item.id}" class="text-[10px] font-bold text-brand-gray uppercase">Unidade</label><input type="text" value="${safeUnit}" id="edit-unit-${item.id}" class="w-full font-bold text-sm text-brand-blue border-b border-gray-300 focus:outline-none focus:ring-2 focus:ring-brand-blue bg-transparent uppercase"></div>
-                        <div><label for="edit-date-${item.id}" class="text-[10px] font-bold text-brand-gray uppercase">Data</label><input type="date" value="${safeDate}" id="edit-date-${item.id}" class="w-full text-xs border border-gray-300 rounded p-1 focus:outline-none focus:ring-2 focus:ring-brand-blue font-bold text-brand-dark"></div>
+                        <div><label class="text-[10px] font-bold text-gray-400 uppercase">Unidade</label><input type="text" value="${item.unit}" id="edit-unit-${item.id}" class="w-full font-bold text-sm text-brand-blue border-b border-gray-300 focus:outline-none bg-transparent uppercase"></div>
+                        <div><label class="text-[10px] font-bold text-gray-400 uppercase">Data</label><input type="date" value="${item.date}" id="edit-date-${item.id}" class="w-full text-xs border border-gray-300 rounded p-1 focus:outline-none font-bold text-brand-dark"></div>
                     </div>
-                    <div class="mb-2"><label for="edit-title-${item.id}" class="flex justify-between text-[10px] font-bold text-brand-gray uppercase"><span>Manchete</span> <span aria-live="polite">${item.title.length}/200</span></label><textarea id="edit-title-${item.id}" maxlength="200" rows="2" class="w-full text-sm font-bold border border-gray-300 rounded p-1.5 focus:outline-none focus:ring-2 focus:ring-brand-blue bg-gray-50 resize-none text-brand-dark" style="font-family: 'Montserrat', sans-serif;">${safeTitle}</textarea></div>
-                    <div class="mb-2"><label for="edit-lead-${item.id}" class="flex justify-between text-[10px] font-bold text-brand-gray uppercase"><span>Síntese (Lead)</span> <span aria-live="polite">${item.lead.length}/500</span></label><textarea id="edit-lead-${item.id}" maxlength="500" rows="3" class="w-full text-xs font-semibold text-brand-dark border border-red-200 rounded p-2 focus:outline-none focus:ring-2 focus:ring-brand-blue bg-red-50 resize-none" style="font-family: 'Montserrat', sans-serif;">${safeLead}</textarea></div>
-                    <div class="mb-2"><label for="edit-content-${item.id}" class="flex justify-between text-[10px] font-bold text-brand-gray uppercase"><span>Detalhes Institucionais</span> <span aria-live="polite">${item.content.length}/1500</span></label><textarea id="edit-content-${item.id}" maxlength="1500" rows="3" class="w-full text-xs border border-gray-300 rounded p-2 focus:outline-none focus:ring-2 focus:ring-brand-blue text-gray-700 leading-relaxed resize-none" style="font-family: 'Montserrat', sans-serif;">${safeContent}</textarea></div>
-                    <div><label for="edit-type-${item.id}" class="text-[10px] font-bold text-brand-gray uppercase">Eixo</label><select id="edit-type-${item.id}" class="w-full text-xs border border-gray-300 rounded p-1.5 focus:outline-none focus:ring-2 focus:ring-brand-blue bg-brand-info-light text-brand-blue font-semibold"><option value="Educação e Qualificação" ${safeType === 'Educação e Qualificação' ? 'selected' : ''}>Educação e Qualificação</option><option value="Saúde e Segurança" ${safeType === 'Saúde e Segurança' ? 'selected' : ''}>Saúde e Segurança</option><option value="Indústria 4.0 e Inovação" ${safeType === 'Indústria 4.0 e Inovação' ? 'selected' : ''}>Indústria 4.0 e Inovação</option><option value="Relações Institucionais" ${safeType === 'Relações Institucionais' ? 'selected' : ''}>Relações Institucionais</option></select></div>
+                    <div class="mb-2"><label class="flex justify-between text-[10px] font-bold text-gray-400 uppercase"><span>Manchete</span> <span>${item.title.length}/200</span></label><textarea id="edit-title-${item.id}" maxlength="200" rows="2" class="w-full text-sm font-bold border border-gray-300 rounded p-1.5 focus:outline-none bg-gray-50 resize-none text-brand-dark" style="font-family: 'Montserrat', sans-serif;">${item.title}</textarea></div>
+                    <div class="mb-2"><label class="flex justify-between text-[10px] font-bold text-gray-400 uppercase"><span>Síntese (Lead)</span> <span>${item.lead.length}/500</span></label><textarea id="edit-lead-${item.id}" maxlength="500" rows="3" class="w-full text-xs font-semibold text-brand-dark border-l-[3px] border-brand-red border-y border-r border-gray-300 rounded-r p-2 focus:outline-none bg-red-50 resize-none" style="font-family: 'Montserrat', sans-serif;">${item.lead}</textarea></div>
+                    <div class="mb-2"><label class="flex justify-between text-[10px] font-bold text-gray-400 uppercase"><span>Detalhes Institucionais</span> <span>${item.content.length}/1500</span></label><textarea id="edit-content-${item.id}" maxlength="1500" rows="3" class="w-full text-xs border border-gray-300 rounded p-2 focus:outline-none text-gray-700 leading-relaxed resize-none" style="font-family: 'Montserrat', sans-serif;">${item.content}</textarea></div>
+                    <div><label class="text-[10px] font-bold text-gray-400 uppercase">Eixo</label><select id="edit-type-${item.id}" class="w-full text-xs border border-gray-300 rounded p-1.5 focus:outline-none bg-blue-50 text-brand-blue font-semibold"><option value="Educação e Qualificação" ${item.type === 'Educação e Qualificação' ? 'selected' : ''}>Educação e Qualificação</option><option value="Saúde e Segurança" ${item.type === 'Saúde e Segurança' ? 'selected' : ''}>Saúde e Segurança</option><option value="Indústria 4.0 e Inovação" ${item.type === 'Indústria 4.0 e Inovação' ? 'selected' : ''}>Indústria 4.0 e Inovação</option><option value="Relações Institucionais" ${item.type === 'Relações Institucionais' ? 'selected' : ''}>Relações Institucionais</option></select></div>
                 `;
                 container.appendChild(card);
             });
@@ -924,11 +807,10 @@
         window.saveAllParsedReports = async function(event) {
             const btn = event ? event.currentTarget : document.querySelector('#stage-review button');
             const originalText = btn.innerHTML; 
-            btn.innerHTML = "Salvando..."; 
-            btn.setAttribute('aria-busy', 'true');
+            btn.innerHTML = "A guardar..."; 
             btn.disabled = true;
             
-            // Aplica as edições feitas na tela e DESTRÓI a imagem original para poupar a memória do Storage 
+            // Aplica edições feitas na tela
             parsedReportsCache.forEach((item) => {
                 item.unit = document.getElementById(`edit-unit-${item.id}`).value; 
                 item.title = semanticTrim(document.getElementById(`edit-title-${item.id}`).value, 200, false); 
@@ -937,27 +819,30 @@
                 item.type = document.getElementById(`edit-type-${item.id}`).value; 
                 item.content = semanticTrim(document.getElementById(`edit-content-${item.id}`).value, 1500, true);
                 
-                // OTIMIZAÇÃO CRÍTICA
+                // OTIMIZAÇÃO CRÍTICA DE MEMÓRIA (Destrói imagem original antes de gravar)
                 delete item.originalImage; 
             });
             
             try { 
                 let newReportsData = [...reports, ...parsedReportsCache]; 
-                localStorage.setItem('fiegReportsV34', JSON.stringify(newReportsData)); 
+                
+                // O localForage usa o IndexedDB para guardar tamanhos gigantes de forma segura
+                await localforage.setItem('fiegReportsDb', newReportsData); 
+                
                 reports = newReportsData; 
                 applyFilters(); 
                 closeModal(); 
             } catch (e) { 
-                alert("⚠️ Limite de Memória do Navegador Atingido.\nEsvazie o painel ou exclua relatórios antigos para salvar os novos."); 
+                console.error("Erro na base de dados IndexedDB:", e);
+                alert("⚠️ Erro Crítico ao Guardar.\nA base de dados do navegador não conseguiu processar os ficheiros."); 
             } finally { 
                 btn.innerHTML = originalText; 
-                btn.removeAttribute('aria-busy');
                 btn.disabled = false; 
             }
         }
 
-        window.openModal = function() { openAccessibleDialog('import-modal', '#word-upload'); document.getElementById('stage-upload').classList.remove('hidden'); document.getElementById('stage-review').classList.add('hidden'); document.getElementById('upload-feedback').innerText = "Selecionar arquivos Word (.docx)"; }
-        window.closeModal = function() { closeAccessibleDialog('import-modal'); document.getElementById('word-upload').value = ''; }
+        window.openModal = function() { document.getElementById('import-modal').classList.remove('hidden'); document.getElementById('stage-upload').classList.remove('hidden'); document.getElementById('stage-review').classList.add('hidden'); document.getElementById('upload-feedback').innerText = "Selecionar ficheiros Word (.docx)"; }
+        window.closeModal = function() { document.getElementById('import-modal').classList.add('hidden'); document.getElementById('word-upload').value = ''; }
 
         // --- FUNÇÕES DE EDIÇÃO INDIVIDUAL E EXCLUSÃO (MAIN FEED) ---
         window.editReport = function(id) {
@@ -976,10 +861,11 @@
             document.getElementById('edit-single-content').value = report.content || '';
             document.getElementById('count-content').innerText = (report.content ? report.content.length : 0) + '/1500';
             
-            openAccessibleDialog('edit-single-modal', '#edit-single-unit');
+            document.getElementById('edit-single-modal').classList.remove('hidden');
         }
-        window.closeEditModal = function() { closeAccessibleDialog('edit-single-modal'); }
-        window.saveEditedReport = function() {
+        window.closeEditModal = function() { document.getElementById('edit-single-modal').classList.add('hidden'); }
+        
+        window.saveEditedReport = async function() {
             const id = document.getElementById('edit-single-id').value; const index = reports.findIndex(r => r.id === id); if(index === -1) return;
             reports[index].unit = document.getElementById('edit-single-unit').value; 
             reports[index].type = document.getElementById('edit-single-type').value; 
@@ -990,9 +876,10 @@
             reports[index].content = semanticTrim(document.getElementById('edit-single-content').value, 1500, true);
             
             try {
-                localStorage.setItem('fiegReportsV34', JSON.stringify(reports)); 
+                // Guarda de forma assíncrona no IndexedDB
+                await localforage.setItem('fiegReportsDb', reports); 
             } catch (e) {
-                alert("⚠️ O limite de memória do navegador foi atingido. As alterações refletirão agora na tela, mas não serão salvas permanentemente.");
+                alert("⚠️ Erro ao guardar as alterações na base de dados local.");
             }
             closeEditModal(); 
             applyFilters();
@@ -1002,9 +889,9 @@
             window.openConfirmModal(
                 "Apagar Matéria",
                 "Deseja apagar esta matéria definitivamente do sistema?",
-                () => {
+                async () => {
                     reports = reports.filter(r => r.id !== id); 
-                    localStorage.setItem('fiegReportsV34', JSON.stringify(reports)); 
+                    await localforage.setItem('fiegReportsDb', reports); 
                     applyFilters(); 
                 }
             );
@@ -1031,30 +918,18 @@
 
         function renderNewsFeed(data) {
             const feed = document.getElementById('news-feed'); if(!feed) return; feed.innerHTML = '';
-            if(data.length === 0) { feed.innerHTML = '<p class="text-brand-gray text-center p-12 bg-white rounded-xl font-medium italic text-lg shadow-sm border border-gray-100">A mesa de redação não encontrou pautas para o filtro selecionado.</p>'; return; }
+            if(data.length === 0) { feed.innerHTML = '<p class="text-gray-500 text-center p-12 bg-white rounded-xl font-medium italic text-lg shadow-sm border border-gray-100">A mesa de redação não encontrou pautas para o filtro selecionado.</p>'; return; }
             const sortedData = [...data].sort((a, b) => new Date(b.date) - new Date(a.date));
             
             sortedData.forEach(item => {
                 let formattedDate = 'Data Indefinida'; if(item.date) { const [y, m, d] = item.date.split('-'); const dateObj = new Date(y, m - 1, d); if(!isNaN(dateObj)) { formattedDate = new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' }).format(dateObj); } }
-                const safeUnit = escapeHtml(item.unit);
-                const safeTitle = escapeHtml(item.title);
-                const safeType = escapeHtml(item.type);
-                const safeFormattedDate = escapeHtml(formattedDate);
-                const safeImage = escapeHtml(item.image);
-                const reportImageAlt = escapeHtml(item.title || item.unit || 'Imagem da matéria');
-                
-                // MÁGICA TIPOGRÁFICA: Aplicação forçada das fontes executivas
-                let editorialBody = ''; 
-                if (item.lead && item.lead.trim().length > 0) { 
-                    editorialBody += `<div class="text-lead mb-5 text-justify text-brand-dark font-semibold border border-gray-200 bg-gray-50 py-3 px-4 rounded" style="font-family: 'Montserrat', sans-serif;">${escapeHtml(item.lead)}</div>`; 
-                }
                 
                 let paragraphsHtml = '';
                 if (item.content) { 
                     let paragraphs = item.content.split(/\n+/); 
                     for(let i = 0; i < paragraphs.length; i++) { 
                         if(paragraphs[i].trim().length > 0) { 
-                            paragraphsHtml += `<p class="text-body mb-4 text-justify text-gray-800" style="font-family: 'Montserrat', sans-serif;">${escapeHtml(paragraphs[i].trim())}</p>`; 
+                            paragraphsHtml += `<p class="text-body mb-4 text-justify text-gray-800" style="font-family: 'Montserrat', sans-serif;">${paragraphs[i].trim()}</p>`; 
                         } 
                     } 
                 }
@@ -1063,22 +938,21 @@
                 
                 card.className = 'pdf-item bg-white mb-10 pt-4 relative font-sans';
                 
-                // CAIXA DE IMAGEM 280px ALTURA (Fixo) COM OBJECT-FIT: COVER E FUNDO CINZA
-                let imageHtml = item.image ? `<div class="w-full news-image-container drop-shadow-sm"><img src="${safeImage}" alt="${reportImageAlt}" class="news-image"></div>` : '';
+                let imageHtml = item.image ? `<div class="w-full news-image-container drop-shadow-sm"><img src="${item.image}" class="news-image"></div>` : '';
 
                 card.innerHTML = `
-                    <div id="overlay-card-${item.id}" class="hidden absolute inset-0 bg-white bg-opacity-70 z-10 flex items-center justify-center pointer-events-none"><span class="bg-brand-danger text-white font-black px-6 py-2 rounded shadow-lg tracking-widest border border-red-900">OCULTADO DO PDF</span></div>
-                    <div class="hide-on-pdf bg-gray-50 border-b border-gray-200 px-6 py-3 flex justify-between items-center relative z-20 mb-6 rounded"><label for="include-pdf-${item.id}" class="flex items-center gap-2 cursor-pointer text-sm font-bold text-brand-blue select-none hover:text-blue-800 transition"><input id="include-pdf-${item.id}" type="checkbox" checked onchange="togglePdfInclusion(this, 'card-${item.id}')" class="w-5 h-5 rounded text-brand-blue focus:ring-brand-blue cursor-pointer" aria-label="Incluir ${safeTitle || 'matéria'} no relatório em PDF"> Incluir no Relatório (PDF)</label><div class="flex gap-2"><button onclick="editReport('${item.id}')" class="text-brand-blue hover:text-blue-800 flex items-center gap-1 text-xs font-bold transition px-3 py-2 hover:bg-brand-info-light rounded border border-blue-200 focus:outline-none focus:ring-2 focus:ring-brand-blue focus:ring-offset-2" title="Editar Matéria"><i class="ph-bold ph-pencil-simple text-lg" aria-hidden="true"></i> Editar</button><button onclick="deleteReport('${item.id}')" class="text-gray-600 hover:text-white hover:bg-brand-danger flex items-center gap-1 text-xs font-bold transition px-3 py-2 rounded border border-gray-300 hover:border-brand-danger focus:outline-none focus:ring-2 focus:ring-brand-blue focus:ring-offset-2" title="Excluir Permanentemente"><i class="ph-fill ph-trash text-lg" aria-hidden="true"></i> Apagar</button></div></div>
+                    <div id="overlay-card-${item.id}" class="hidden absolute inset-0 bg-white bg-opacity-70 z-10 flex items-center justify-center pointer-events-none"><span class="bg-brand-red text-white font-black px-6 py-2 rounded shadow-lg tracking-widest border border-red-800">OCULTADO DO PDF</span></div>
+                    <div class="hide-on-pdf bg-gray-50 border-b border-gray-200 px-6 py-3 flex justify-between items-center relative z-20 mb-6 rounded"><label class="flex items-center gap-2 cursor-pointer text-sm font-bold text-brand-blue select-none hover:text-blue-800 transition"><input type="checkbox" checked onchange="togglePdfInclusion(this, 'card-${item.id}')" class="w-4 h-4 rounded text-brand-blue focus:ring-brand-blue cursor-pointer"> Incluir no Relatório (PDF)</label><div class="flex gap-2"><button onclick="editReport('${item.id}')" class="text-brand-blue hover:text-blue-800 flex items-center gap-1 text-xs font-bold transition px-3 py-1 hover:bg-blue-50 rounded border border-blue-200" title="Editar Matéria"><i class="ph-bold ph-pencil-simple text-lg"></i> Editar</button><button onclick="deleteReport('${item.id}')" class="text-gray-500 hover:text-white hover:bg-brand-red flex items-center gap-1 text-xs font-bold transition px-3 py-1 rounded border border-gray-300 hover:border-brand-red" title="Excluir Permanentemente"><i class="ph-fill ph-trash text-lg"></i> Apagar</button></div></div>
                     
                     <div class="pb-6">
                         <div class="border-t border-brand-blue pt-4">
-                            <div class="mb-3"><span class="text-meta text-brand-blue font-black tracking-[0.2em] uppercase" style="font-family: 'Montserrat', sans-serif;">${safeUnit}</span></div>
-                            <h3 class="text-title font-bold text-brand-dark mb-4 leading-tight" style="font-family: 'Montserrat', sans-serif;">${safeTitle}</h3>
-                            <div class="text-meta flex items-center gap-6 mb-6 font-bold text-brand-gray uppercase tracking-wider" style="font-family: 'Montserrat', sans-serif;"><span class="flex items-center gap-1.5"><i class="ph-fill ph-calendar-blank text-brand-blue text-base" aria-hidden="true"></i> ${safeFormattedDate}</span><span class="flex items-center gap-1.5"><i class="ph-fill ph-tag text-brand-blue text-base" aria-hidden="true"></i> ${safeType}</span></div>
+                            <div class="mb-3"><span class="text-meta text-brand-blue font-black tracking-[0.2em] uppercase" style="font-family: 'Montserrat', sans-serif;">${item.unit}</span></div>
+                            <h3 class="text-title font-bold text-brand-dark mb-4 leading-tight" style="font-family: 'Montserrat', sans-serif;">${item.title}</h3>
+                            <div class="text-meta flex items-center gap-6 mb-6 font-bold text-brand-gray uppercase tracking-wider" style="font-family: 'Montserrat', sans-serif;"><span class="flex items-center gap-1.5"><i class="ph-fill ph-calendar-blank text-brand-blue text-base"></i> ${formattedDate}</span><span class="flex items-center gap-1.5"><i class="ph-fill ph-tag text-brand-blue text-base"></i> ${item.type}</span></div>
                         </div>
                         ${imageHtml}
                         <div class="max-w-none">
-                            ${editorialBody}
+                            ${item.lead ? `<div class="text-lead mb-5 text-justify text-brand-dark font-semibold border-l-4 border-brand-red pl-4 bg-gray-50 py-3 pr-3 rounded-r" style="font-family: 'Montserrat', sans-serif;">${item.lead}</div>` : ''}
                             ${paragraphsHtml}
                         </div>
                     </div>
@@ -1087,7 +961,6 @@
             });
         }
 
-        // --- EXPORTAÇÃO EXECUTIVA COM PROTEÇÃO DE EIXOS ---
         function loadBase64Image(url) {
             return new Promise((resolve) => {
                 const img = new Image(); img.crossOrigin = 'Anonymous'; img.onload = () => { const canvas = document.createElement('canvas'); canvas.width = img.width; canvas.height = img.height; canvas.getContext('2d').drawImage(img, 0, 0); resolve({ dataUrl: canvas.toDataURL('image/png'), width: img.width, height: img.height }); }; img.onerror = () => resolve(null); img.src = url;
@@ -1100,10 +973,8 @@
             const loadingOverlay = document.getElementById('pdf-loading'); 
             
             btn.disabled = true;
-            btn.setAttribute('aria-busy', 'true');
             loadingOverlay.classList.remove('hidden'); 
             loadingOverlay.classList.add('flex'); 
-            loadingOverlay.setAttribute('aria-hidden', 'false');
             
             window.scrollTo(0, 0); 
             document.body.classList.add('pdf-mode');
@@ -1123,7 +994,6 @@
                 pagebreak: { mode: ['css', 'legacy'] } 
             };
 
-            // Utilizando o método clássico de Promises do html2pdf (estável contra congelamentos)
             html2pdf().set(opt).from(element).toPdf().get('pdf').then(function (pdf) {
                 const totalPages = pdf.internal.getNumberOfPages();
                 for (let i = 1; i <= totalPages; i++) {
@@ -1144,9 +1014,7 @@
                 document.body.classList.remove('pdf-mode'); 
                 loadingOverlay.classList.remove('flex'); 
                 loadingOverlay.classList.add('hidden');
-                loadingOverlay.setAttribute('aria-hidden', 'true');
                 btn.innerHTML = originalText;
-                btn.removeAttribute('aria-busy');
                 btn.disabled = false;
             }).catch((e) => {
                 console.error(e);
@@ -1154,9 +1022,7 @@
                 document.body.classList.remove('pdf-mode'); 
                 loadingOverlay.classList.add('hidden');
                 loadingOverlay.classList.remove('flex');
-                loadingOverlay.setAttribute('aria-hidden', 'true');
                 btn.innerHTML = originalText;
-                btn.removeAttribute('aria-busy');
                 btn.disabled = false;
             });
         }
