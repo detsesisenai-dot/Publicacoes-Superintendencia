@@ -100,6 +100,10 @@ components:
     textColor: "{colors.ink}"
     rounded: "{rounded.xl}"
     padding: "24px"
+responsive:
+  touch-target-minimum: "44px"
+  mobile-breakpoint: "640px"
+  narrow-action-layout: "stacked full-width controls"
 ---
 
 # Design System: Informe Executivo Sistema FIEG
@@ -186,6 +190,8 @@ O sistema atual usa um hibrido de elevacao leve e camadas tonais. A interface we
 
 **The Flat PDF Rule.** Qualquer elevacao visual da interface deve desaparecer no PDF final. O documento exportado precisa parecer normativo, nao uma captura de tela.
 
+**The Touch Target Rule.** Toda acao interativa precisa manter area de toque minima de 44px. Botoes pequenos so sao aceitaveis visualmente se a area clicavel real continuar ampla.
+
 ## 5. Components
 
 ### Buttons
@@ -194,6 +200,7 @@ O sistema atual usa um hibrido de elevacao leve e camadas tonais. A interface we
 - **Primary:** fundo Azul Institucional, texto branco, peso 600-700, icone Phosphor a esquerda e padding compacto.
 - **Hover / Focus:** hover escurece ou clareia a superficie; foco usa anel azul. Estados de foco devem ficar visiveis em todos os botoes.
 - **Secondary / Ghost / Tertiary:** secundarios usam fundo branco ou cinza claro com texto azul ou cinza. Acoes destrutivas usam vermelho apenas quando a destruicao e confirmada.
+- **Touch:** botoes, botoes de icone, labels clicaveis e checkboxes precisam ter alvo minimo de 44px. Em telas estreitas, acoes principais devem ocupar a largura disponivel em vez de ficarem espremidas lado a lado.
 
 ### Chips
 
@@ -217,7 +224,7 @@ O sistema atual usa um hibrido de elevacao leve e camadas tonais. A interface we
 ### Navigation
 
 - **Style:** nao ha navegacao de paginas. A estrutura atual e orientada por fluxo: cabecalho, filtros, lista de materias, modal de importacao, modal de edicao, modal de recorte e modal de confirmacao.
-- **Mobile treatment:** a interface usa colunas responsivas via Tailwind, mas os grupos de botoes e filtros ainda precisam de teste visual em telas pequenas.
+- **Mobile treatment:** cabecalho, filtros, barras de acao e rodapes de modal empilham em telas estreitas. Intervalos de data passam para coluna, e acoes de cards deixam de depender de hover em toque.
 
 ### Editorial Report Card
 

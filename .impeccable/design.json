@@ -147,7 +147,13 @@
         "name": "lg",
         "value": "1024px"
       }
-    ]
+    ],
+    "responsiveMeta": {
+      "touchTargetMinimum": "44px",
+      "mobileBreakpoint": "640px",
+      "narrowActionLayout": "Stack actions full-width in narrow screens; keep hover-only affordances visible for coarse pointers.",
+      "primaryAdaptationTargets": ["header actions", "filter date ranges", "modal footers", "review card controls", "report toolbar"]
+    }
   },
   "components": [
     {
@@ -239,6 +245,11 @@
         "name": "The Flat PDF Rule",
         "body": "Qualquer elevacao visual da interface deve desaparecer no PDF final. O documento exportado precisa parecer normativo, nao uma captura de tela.",
         "section": "elevation"
+      },
+      {
+        "name": "The Touch Target Rule",
+        "body": "Toda acao interativa precisa manter area de toque minima de 44px. Botoes pequenos so sao aceitaveis visualmente se a area clicavel real continuar ampla.",
+        "section": "interaction"
       }
     ],
     "dos": [

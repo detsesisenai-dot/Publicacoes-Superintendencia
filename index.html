@@ -47,8 +47,49 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
 
     <style>
+        *, *::before, *::after { box-sizing: border-box; }
         body { background-color: #F4F6F9; font-family: 'Montserrat', sans-serif; box-sizing: border-box; }
         .hide-on-pdf { display: block; }
+        .tap-target {
+            min-height: 44px;
+            min-width: 44px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            touch-action: manipulation;
+        }
+        .touch-input {
+            min-height: 44px;
+            touch-action: manipulation;
+        }
+        .touch-checkbox {
+            width: 24px;
+            height: 24px;
+            flex: 0 0 24px;
+        }
+        .responsive-actions,
+        .responsive-split,
+        .report-toolbar,
+        .report-actions,
+        .modal-footer-actions {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+        .responsive-split,
+        .report-toolbar {
+            justify-content: space-between;
+            align-items: center;
+        }
+        .report-actions {
+            justify-content: flex-end;
+        }
+        .date-range {
+            display: flex;
+            gap: 0.5rem;
+        }
+        .mobile-only-break { display: none; }
         
         /* --- MODO PDF EXECUTIVO NORMATIZADO E BLINDADO --- */
         body.pdf-mode { overflow: visible !important; width: 1000px !important; min-width: 1000px !important; background-color: #FFFFFF !important; }
@@ -132,6 +173,74 @@
 
         /* Estilo do modal de Crop */
         .cropper-view-box, .cropper-face { border-radius: 0; }
+
+        @media (hover: none), (pointer: coarse) {
+            .touch-reveal {
+                opacity: 1 !important;
+            }
+        }
+
+        @media (max-width: 640px) {
+            body { padding-bottom: 1.5rem; }
+            #executive-dashboard {
+                padding-left: 0.75rem;
+                padding-right: 0.75rem;
+                padding-top: 1rem;
+            }
+            .mobile-stack {
+                flex-direction: column !important;
+                align-items: stretch !important;
+            }
+            .mobile-stack > * {
+                width: 100%;
+            }
+            .mobile-full {
+                width: 100%;
+                justify-content: center;
+            }
+            .mobile-title {
+                font-size: 1.75rem !important;
+                line-height: 1.15 !important;
+                overflow-wrap: anywhere;
+            }
+            .date-range,
+            .responsive-split,
+            .report-toolbar,
+            .modal-footer-actions {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .report-actions {
+                display: grid;
+                grid-template-columns: 1fr;
+                width: 100%;
+            }
+            .modal-shell {
+                width: 100%;
+                max-height: calc(100dvh - 1rem);
+                border-radius: 0.75rem;
+            }
+            .modal-header,
+            .modal-footer {
+                padding: 1rem;
+            }
+            .modal-body {
+                padding: 1rem;
+            }
+            .modal-heading {
+                font-size: 1.125rem !important;
+                line-height: 1.25 !important;
+            }
+            .upload-drop {
+                padding: 1.25rem;
+            }
+            .mobile-only-break { display: block; }
+            .mobile-meta {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem !important;
+            }
+        }
     </style>
 </head>
 <body class="text-brand-dark antialiased min-h-screen pb-12 font-sans">
@@ -150,11 +259,11 @@
     <div id="executive-dashboard" class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
         
         <!-- Cabeçalho Principal (Web) -->
-        <header class="flex flex-col md:flex-row justify-between items-start border-b-2 border-brand-blue pb-6 mb-8 bg-white/90 p-6 rounded-xl shadow-sm hide-on-pdf">
+        <header class="flex flex-col md:flex-row justify-between items-start border-b-2 border-brand-blue pb-6 mb-8 bg-white/90 p-4 sm:p-6 rounded-xl shadow-sm hide-on-pdf">
             <div class="flex-1">
-                <div class="flex items-center gap-3 mb-2">
+                <div class="flex items-start sm:items-center gap-3 mb-2">
                     <i class="ph-fill ph-buildings text-3xl text-brand-blue"></i>
-                    <h1 class="text-3xl md:text-4xl font-black text-brand-blue tracking-tight">INFORME EXECUTIVO</h1>
+                    <h1 class="mobile-title text-3xl md:text-4xl font-black text-brand-blue tracking-tight">INFORME EXECUTIVO</h1>
                 </div>
                 <p class="text-brand-gray font-bold text-lg">
                     Sistema FIEG | <span id="current-date-display" class="text-brand-dark"></span> 
@@ -162,17 +271,17 @@
                 <p id="active-filters-display" class="text-brand-red font-bold text-sm mt-1"></p>
             </div>
             
-            <div class="flex flex-col items-end gap-4 mt-4 md:mt-0">
+            <div class="flex flex-col items-end gap-4 mt-4 md:mt-0 w-full md:w-auto">
                 <div class="header-logos">
                     <img src="https://i.postimg.cc/HWKTMyKs/sistema-fieg-02.png" crossorigin="anonymous" alt="Sistema FIEG" style="height: 36px; width: auto; object-fit: contain; display: block;">
                 </div>
                 
-                <div class="flex gap-3 mt-2">
-                    <button onclick="openModal()" class="flex items-center gap-2 bg-white border border-brand-blue text-brand-blue font-semibold py-2 px-4 rounded-lg shadow-sm hover:bg-gray-50 transition-colors">
+                <div class="responsive-actions mobile-stack w-full md:w-auto mt-2">
+                    <button onclick="openModal()" class="tap-target mobile-full bg-white border border-brand-blue text-brand-blue font-semibold py-2 px-4 rounded-lg shadow-sm hover:bg-gray-50 transition-colors">
                         <i class="ph ph-magic-wand text-xl"></i>
                         Importar Relatório
                     </button>
-                    <button onclick="exportToPDF()" class="flex items-center gap-2 bg-brand-blue text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:bg-blue-900 transition-colors" id="btn-export">
+                    <button onclick="exportToPDF()" class="tap-target mobile-full bg-brand-blue text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:bg-blue-900 transition-colors" id="btn-export">
                         <i class="ph ph-file-pdf text-xl"></i>
                         Gerar PDF Oficial
                     </button>
@@ -187,16 +296,16 @@
         </div>
 
         <!-- Filtros em Tempo Real -->
-        <div class="bg-white p-5 rounded-xl shadow-sm mb-10 flex flex-col gap-4 border border-gray-100 hide-on-pdf" id="filters-container">
+        <div class="bg-white p-4 sm:p-5 rounded-xl shadow-sm mb-10 flex flex-col gap-4 border border-gray-100 hide-on-pdf" id="filters-container">
             <h3 class="text-brand-blue font-bold border-b border-gray-100 pb-2 mb-2"><i class="ph-bold ph-funnel"></i> Filtros de Pauta</h3>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 w-full">
                 <div>
                     <label class="block text-xs font-bold text-brand-gray uppercase mb-1">Buscar Unidade</label>
-                    <input type="text" id="filter-unit-text" onkeyup="applyFilters()" placeholder="Ex: Canaã, Jaiara..." class="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-brand-blue font-medium bg-gray-50 hover:bg-white transition">
+                    <input type="text" id="filter-unit-text" onkeyup="applyFilters()" placeholder="Ex: Canaã, Jaiara..." class="touch-input w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-brand-blue font-medium bg-gray-50 hover:bg-white transition">
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-brand-gray uppercase mb-1">Eixo de Atuação</label>
-                    <select id="filter-type" onchange="applyFilters()" class="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-brand-blue font-medium bg-gray-50 hover:bg-white transition cursor-pointer">
+                    <select id="filter-type" onchange="applyFilters()" class="touch-input w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-brand-blue font-medium bg-gray-50 hover:bg-white transition cursor-pointer">
                         <option value="all">Todos os Eixos</option>
                         <option value="Educação e Qualificação">Educação e Qualificação</option>
                         <option value="Saúde e Segurança">Saúde e Segurança</option>
@@ -206,25 +315,25 @@
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-brand-gray uppercase mb-1">Intervalo de Meses</label>
-                    <div class="flex gap-2">
-                        <input type="month" id="filter-start-month" onchange="applyFilters()" title="Mês Inicial" class="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-brand-blue font-medium bg-gray-50 hover:bg-white transition cursor-pointer">
-                        <input type="month" id="filter-end-month" onchange="applyFilters()" title="Mês Final" class="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-brand-blue font-medium bg-gray-50 hover:bg-white transition cursor-pointer">
+                    <div class="date-range">
+                        <input type="month" id="filter-start-month" onchange="applyFilters()" title="Mês Inicial" class="touch-input w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-brand-blue font-medium bg-gray-50 hover:bg-white transition cursor-pointer">
+                        <input type="month" id="filter-end-month" onchange="applyFilters()" title="Mês Final" class="touch-input w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-brand-blue font-medium bg-gray-50 hover:bg-white transition cursor-pointer">
                     </div>
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-brand-gray uppercase mb-1">Datas Específicas</label>
-                    <div class="flex gap-2">
-                        <input type="date" id="filter-start-date" onchange="applyFilters()" title="Data Inicial" class="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-brand-blue font-medium bg-gray-50 hover:bg-white transition cursor-pointer">
-                        <input type="date" id="filter-end-date" onchange="applyFilters()" title="Data Final" class="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-brand-blue font-medium bg-gray-50 hover:bg-white transition cursor-pointer">
+                    <div class="date-range">
+                        <input type="date" id="filter-start-date" onchange="applyFilters()" title="Data Inicial" class="touch-input w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-brand-blue font-medium bg-gray-50 hover:bg-white transition cursor-pointer">
+                        <input type="date" id="filter-end-date" onchange="applyFilters()" title="Data Final" class="touch-input w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-brand-blue font-medium bg-gray-50 hover:bg-white transition cursor-pointer">
                     </div>
                 </div>
             </div>
             
-            <div class="flex justify-between items-center w-full mt-2 border-t border-gray-100 pt-4">
-                <button onclick="clearAllData()" class="text-red-500 hover:text-red-700 transition-colors font-bold text-sm flex items-center gap-1" title="Zerar Banco de Dados">
+            <div class="responsive-split w-full mt-2 border-t border-gray-100 pt-4">
+                <button onclick="clearAllData()" class="tap-target mobile-full text-red-500 hover:text-red-700 transition-colors font-bold text-sm flex items-center gap-1" title="Zerar Banco de Dados">
                     <i class="ph-bold ph-trash"></i> Apagar Todos os Dados
                 </button>
-                <button onclick="clearFilters()" class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition-colors font-bold text-sm flex items-center gap-1" title="Limpar Filtros e Ver Tudo">
+                <button onclick="clearFilters()" class="tap-target mobile-full bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition-colors font-bold text-sm flex items-center gap-1" title="Limpar Filtros e Ver Tudo">
                     <i class="ph-bold ph-arrows-counter-clockwise"></i> Redefinir Filtros
                 </button>
             </div>
@@ -239,20 +348,20 @@
     </div>
 
     <!-- Modal de Importação -->
-    <div id="import-modal" class="fixed inset-0 bg-brand-dark bg-opacity-80 z-50 hidden flex items-center justify-center p-4 hide-on-pdf backdrop-blur-sm">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-6xl h-[85vh] flex flex-col overflow-hidden">
-            <div class="p-5 border-b border-gray-200 flex justify-between items-center bg-gray-50">
-                <h3 class="text-2xl font-bold text-brand-blue flex items-center gap-2">
+    <div id="import-modal" class="fixed inset-0 bg-brand-dark bg-opacity-80 z-50 hidden flex items-center justify-center p-2 sm:p-4 hide-on-pdf backdrop-blur-sm">
+        <div class="modal-shell bg-white rounded-2xl shadow-2xl w-full max-w-6xl h-[85vh] flex flex-col overflow-hidden">
+            <div class="modal-header p-5 border-b border-gray-200 flex justify-between items-start sm:items-center gap-3 bg-gray-50">
+                <h3 class="modal-heading text-2xl font-bold text-brand-blue flex items-center gap-2">
                     <i class="ph-fill ph-magic-wand"></i> Redator Especialista e Importador
                 </h3>
-                <button onclick="closeModal()" class="text-gray-500 hover:text-brand-red transition-colors bg-white p-2 rounded-full shadow-sm">
+                <button onclick="closeModal()" class="tap-target text-gray-500 hover:text-brand-red transition-colors bg-white p-2 rounded-full shadow-sm">
                     <i class="ph-bold ph-x text-xl"></i>
                 </button>
             </div>
             
-            <div class="p-6 overflow-y-auto flex-grow bg-gray-100" id="modal-body">
+            <div class="modal-body p-6 overflow-y-auto flex-grow bg-gray-100" id="modal-body">
                 <div id="stage-upload" class="h-full flex flex-col items-center justify-center">
-                    <div class="p-10 border-2 border-dashed border-brand-blue rounded-2xl bg-white text-center w-full max-w-xl cursor-pointer hover:bg-blue-50 transition-all shadow-sm" onclick="document.getElementById('word-upload').click()">
+                    <div class="upload-drop p-10 border-2 border-dashed border-brand-blue rounded-2xl bg-white text-center w-full max-w-xl cursor-pointer hover:bg-blue-50 transition-all shadow-sm" onclick="document.getElementById('word-upload').click()">
                         <input type="file" id="word-upload" accept=".docx" multiple class="hidden" onchange="processWordFiles(event)">
                         <i class="ph-fill ph-file-doc text-7xl text-brand-blue mb-4"></i>
                         <h4 class="text-xl font-bold text-brand-blue" id="upload-feedback">Selecionar ficheiros Word (.docx)</h4>
@@ -267,9 +376,9 @@
                 </div>
 
                 <div id="stage-review" class="hidden">
-                    <div class="flex justify-between items-center mb-4 bg-white p-4 rounded-xl shadow-sm border border-gray-200">
+                    <div class="responsive-split mb-4 bg-white p-4 rounded-xl shadow-sm border border-gray-200">
                         <h4 class="text-lg font-bold text-brand-dark"><span id="review-count">0</span> Pautas prontas para revisão.</h4>
-                        <button onclick="saveAllParsedReports(event)" class="bg-brand-blue text-white px-6 py-2 rounded-lg font-bold shadow-md hover:bg-blue-900 transition flex items-center gap-2">
+                        <button onclick="saveAllParsedReports(event)" class="tap-target mobile-full bg-brand-blue text-white px-6 py-2 rounded-lg font-bold shadow-md hover:bg-blue-900 transition flex items-center gap-2">
                             <i class="ph-fill ph-check-circle"></i> Aprovar e Publicar
                         </button>
                     </div>
@@ -282,25 +391,25 @@
     </div>
 
     <!-- Modal do Cropper (Ferramenta de Enquadramento) -->
-    <div id="crop-modal" class="fixed inset-0 bg-brand-dark bg-opacity-95 z-[2000] hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-5xl flex flex-col overflow-hidden">
-            <div class="p-4 border-b border-gray-200 flex justify-between items-center bg-gray-50">
-                <h3 class="text-xl font-bold text-brand-blue flex items-center gap-2">
+    <div id="crop-modal" class="fixed inset-0 bg-brand-dark bg-opacity-95 z-[2000] hidden flex items-center justify-center p-2 sm:p-4">
+        <div class="modal-shell bg-white rounded-xl shadow-2xl w-full max-w-5xl flex flex-col overflow-hidden">
+            <div class="modal-header p-4 border-b border-gray-200 flex justify-between items-start sm:items-center gap-3 bg-gray-50">
+                <h3 class="modal-heading text-xl font-bold text-brand-blue flex items-center gap-2">
                     <i class="ph-bold ph-crop"></i> Ajustar Enquadramento Fotográfico
                 </h3>
-                <button onclick="closeCropModal()" class="text-gray-500 hover:text-brand-red transition"><i class="ph-bold ph-x text-xl"></i></button>
+                <button onclick="closeCropModal()" class="tap-target text-gray-500 hover:text-brand-red transition"><i class="ph-bold ph-x text-xl"></i></button>
             </div>
             <div class="p-6 bg-gray-200 flex justify-center items-center h-[60vh] max-h-[600px] overflow-hidden">
                 <!-- Imagem Target do Cropper -->
                 <img id="crop-image-target" src="" style="display: block; max-width: 100%; max-height: 100%;">
             </div>
-            <div class="p-4 border-t border-gray-200 flex justify-between items-center bg-white">
+            <div class="modal-footer p-4 border-t border-gray-200 flex justify-between items-center bg-white mobile-stack">
                 <p class="text-sm font-semibold text-brand-gray hidden md:block">
                     <i class="ph-fill ph-info"></i> Arraste a imagem ou redimensione a área de corte. A proporção está travada para o PDF oficial (1000x500).
                 </p>
-                <div class="flex gap-3">
-                    <button onclick="closeCropModal()" class="px-5 py-2 bg-gray-200 text-gray-700 font-bold rounded-lg hover:bg-gray-300 transition">Cancelar</button>
-                    <button onclick="applyCrop()" class="px-5 py-2 bg-brand-blue text-white font-bold rounded-lg hover:bg-blue-800 transition shadow-md flex items-center gap-2">
+                <div class="modal-footer-actions">
+                    <button onclick="closeCropModal()" class="tap-target mobile-full px-5 py-2 bg-gray-200 text-gray-700 font-bold rounded-lg hover:bg-gray-300 transition">Cancelar</button>
+                    <button onclick="applyCrop()" class="tap-target mobile-full px-5 py-2 bg-brand-blue text-white font-bold rounded-lg hover:bg-blue-800 transition shadow-md flex items-center gap-2">
                         <i class="ph-bold ph-check"></i> Aplicar Corte
                     </button>
                 </div>
@@ -309,31 +418,31 @@
     </div>
 
     <!-- Modal de Edição Individual -->
-    <div id="edit-single-modal" class="fixed inset-0 bg-brand-dark bg-opacity-80 z-50 hidden flex items-center justify-center p-4 hide-on-pdf backdrop-blur-sm">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl h-auto max-h-[95vh] flex flex-col overflow-hidden">
-            <div class="p-5 border-b border-gray-200 flex justify-between items-center bg-gray-50">
-                <h3 class="text-xl font-bold text-brand-blue flex items-center gap-2">
+    <div id="edit-single-modal" class="fixed inset-0 bg-brand-dark bg-opacity-80 z-50 hidden flex items-center justify-center p-2 sm:p-4 hide-on-pdf backdrop-blur-sm">
+        <div class="modal-shell bg-white rounded-2xl shadow-2xl w-full max-w-4xl h-auto max-h-[95vh] flex flex-col overflow-hidden">
+            <div class="modal-header p-5 border-b border-gray-200 flex justify-between items-start sm:items-center gap-3 bg-gray-50">
+                <h3 class="modal-heading text-xl font-bold text-brand-blue flex items-center gap-2">
                     <i class="ph-fill ph-pencil-simple"></i> Editar Matéria (Padrão Normatizado)
                 </h3>
-                <button onclick="closeEditModal()" class="text-gray-500 hover:text-brand-red transition-colors bg-white p-2 rounded-full shadow-sm">
+                <button onclick="closeEditModal()" class="tap-target text-gray-500 hover:text-brand-red transition-colors bg-white p-2 rounded-full shadow-sm">
                     <i class="ph-bold ph-x text-xl"></i>
                 </button>
             </div>
-            <div class="p-6 overflow-y-auto flex-grow bg-white space-y-4 font-sans">
+            <div class="modal-body p-6 overflow-y-auto flex-grow bg-white space-y-4 font-sans">
                 <input type="hidden" id="edit-single-id">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-[10px] font-bold text-brand-gray uppercase mb-1">Unidade</label>
-                        <input type="text" id="edit-single-unit" class="w-full border border-gray-300 rounded p-2 focus:outline-none focus:ring-2 focus:ring-brand-blue font-bold uppercase text-sm">
+                        <input type="text" id="edit-single-unit" class="touch-input w-full border border-gray-300 rounded p-2 focus:outline-none focus:ring-2 focus:ring-brand-blue font-bold uppercase text-sm">
                     </div>
                     <div>
                         <label class="block text-[10px] font-bold text-brand-gray uppercase mb-1">Data da Ação</label>
-                        <input type="date" id="edit-single-date" class="w-full border border-gray-300 rounded p-2 focus:outline-none focus:ring-2 focus:ring-brand-blue text-sm font-bold text-brand-dark">
+                        <input type="date" id="edit-single-date" class="touch-input w-full border border-gray-300 rounded p-2 focus:outline-none focus:ring-2 focus:ring-brand-blue text-sm font-bold text-brand-dark">
                     </div>
                 </div>
                 <div>
                     <label class="block text-[10px] font-bold text-brand-gray uppercase mb-1">Eixo Estratégico</label>
-                    <select id="edit-single-type" class="w-full border border-gray-300 rounded p-2 focus:outline-none focus:ring-2 focus:ring-brand-blue text-sm">
+                    <select id="edit-single-type" class="touch-input w-full border border-gray-300 rounded p-2 focus:outline-none focus:ring-2 focus:ring-brand-blue text-sm">
                         <option value="Educação e Qualificação">Educação e Qualificação</option>
                         <option value="Saúde e Segurança">Saúde e Segurança</option>
                         <option value="Indústria 4.0 e Inovação">Indústria 4.0 e Inovação</option>
@@ -342,20 +451,20 @@
                 </div>
                 <div>
                     <label class="flex justify-between text-[10px] font-bold text-brand-gray uppercase mb-1"><span>Manchete Executiva (Título Curto)</span> <span id="count-title" class="text-brand-red"></span></label>
-                    <input type="text" id="edit-single-title" maxlength="200" oninput="document.getElementById('count-title').innerText = this.value.length + '/200';" class="w-full border border-gray-300 rounded p-2 focus:outline-none focus:ring-2 focus:ring-brand-blue font-bold text-lg text-brand-dark">
+                    <input type="text" id="edit-single-title" maxlength="200" oninput="document.getElementById('count-title').innerText = this.value.length + '/200';" class="touch-input w-full border border-gray-300 rounded p-2 focus:outline-none focus:ring-2 focus:ring-brand-blue font-bold text-lg text-brand-dark">
                 </div>
                 <div>
                     <label class="flex justify-between text-[10px] font-bold text-brand-gray uppercase mb-1"><span>Síntese Estratégica (Lead)</span> <span id="count-lead" class="text-brand-red"></span></label>
-                    <textarea id="edit-single-lead" rows="2" maxlength="500" oninput="document.getElementById('count-lead').innerText = this.value.length + '/500';" class="w-full border border-gray-300 rounded p-3 focus:outline-none focus:ring-2 focus:ring-brand-blue text-sm text-brand-dark font-semibold leading-relaxed bg-gray-50 border-l-4 border-l-brand-red"></textarea>
+                    <textarea id="edit-single-lead" rows="2" maxlength="500" oninput="document.getElementById('count-lead').innerText = this.value.length + '/500';" class="touch-input w-full border border-gray-300 rounded p-3 focus:outline-none focus:ring-2 focus:ring-brand-blue text-sm text-brand-dark font-semibold leading-relaxed bg-gray-50 border-l-4 border-l-brand-red"></textarea>
                 </div>
                 <div>
                     <label class="flex justify-between text-[10px] font-bold text-brand-gray uppercase mb-1"><span>Corpo Institucional (Detalhes)</span> <span id="count-content" class="text-brand-red"></span></label>
-                    <textarea id="edit-single-content" rows="6" maxlength="1500" oninput="document.getElementById('count-content').innerText = this.value.length + '/1500';" class="w-full border border-gray-300 rounded p-3 focus:outline-none text-gray-800 leading-relaxed resize-none"></textarea>
+                    <textarea id="edit-single-content" rows="6" maxlength="1500" oninput="document.getElementById('count-content').innerText = this.value.length + '/1500';" class="touch-input w-full border border-gray-300 rounded p-3 focus:outline-none text-gray-800 leading-relaxed resize-none"></textarea>
                 </div>
             </div>
-            <div class="p-4 border-t border-gray-200 bg-gray-50 flex justify-end gap-3">
-                <button onclick="closeEditModal()" class="px-5 py-2 text-gray-600 font-bold hover:bg-gray-200 rounded-lg transition">Cancelar</button>
-                <button onclick="saveEditedReport()" class="px-5 py-2 bg-brand-blue text-white font-bold rounded-lg hover:bg-blue-900 shadow-md transition flex items-center gap-2">
+            <div class="modal-footer p-4 border-t border-gray-200 bg-gray-50 flex justify-end gap-3 mobile-stack">
+                <button onclick="closeEditModal()" class="tap-target mobile-full px-5 py-2 text-gray-600 font-bold hover:bg-gray-200 rounded-lg transition">Cancelar</button>
+                <button onclick="saveEditedReport()" class="tap-target mobile-full px-5 py-2 bg-brand-blue text-white font-bold rounded-lg hover:bg-blue-900 shadow-md transition flex items-center gap-2">
                     <i class="ph-fill ph-check-circle"></i> Atualizar Matéria
                 </button>
             </div>
@@ -363,22 +472,22 @@
     </div>
 
     <!-- Modal de Confirmação -->
-    <div id="custom-confirm-modal" class="fixed inset-0 bg-brand-dark bg-opacity-80 z-[1000] hidden flex items-center justify-center p-4 hide-on-pdf backdrop-blur-sm">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md flex flex-col overflow-hidden">
-            <div class="p-5 border-b border-gray-200 flex justify-between items-center bg-red-50">
-                <h3 id="confirm-modal-title" class="text-xl font-bold text-brand-red flex items-center gap-2">
+    <div id="custom-confirm-modal" class="fixed inset-0 bg-brand-dark bg-opacity-80 z-[1000] hidden flex items-center justify-center p-2 sm:p-4 hide-on-pdf backdrop-blur-sm">
+        <div class="modal-shell bg-white rounded-2xl shadow-2xl w-full max-w-md flex flex-col overflow-hidden">
+            <div class="modal-header p-5 border-b border-gray-200 flex justify-between items-start sm:items-center gap-3 bg-red-50">
+                <h3 id="confirm-modal-title" class="modal-heading text-xl font-bold text-brand-red flex items-center gap-2">
                     <i class="ph-fill ph-warning-circle"></i> Atenção
                 </h3>
-                <button onclick="closeConfirmModal()" class="text-gray-500 hover:text-brand-red transition-colors bg-white p-2 rounded-full shadow-sm">
+                <button onclick="closeConfirmModal()" class="tap-target text-gray-500 hover:text-brand-red transition-colors bg-white p-2 rounded-full shadow-sm">
                     <i class="ph-bold ph-x text-xl"></i>
                 </button>
             </div>
             <div class="p-6 bg-white">
                 <p id="confirm-modal-text" class="text-gray-700 font-medium text-center text-lg"></p>
             </div>
-            <div class="p-4 border-t border-gray-200 bg-gray-50 flex justify-end gap-3">
-                <button onclick="closeConfirmModal()" class="px-5 py-2 text-gray-600 font-bold hover:bg-gray-200 rounded-lg transition">Cancelar</button>
-                <button onclick="executeConfirmAction()" class="px-5 py-2 bg-brand-red text-white font-bold rounded-lg hover:bg-red-700 shadow-md transition flex items-center gap-2">
+            <div class="modal-footer p-4 border-t border-gray-200 bg-gray-50 flex justify-end gap-3 mobile-stack">
+                <button onclick="closeConfirmModal()" class="tap-target mobile-full px-5 py-2 text-gray-600 font-bold hover:bg-gray-200 rounded-lg transition">Cancelar</button>
+                <button onclick="executeConfirmAction()" class="tap-target mobile-full px-5 py-2 bg-brand-red text-white font-bold rounded-lg hover:bg-red-700 shadow-md transition flex items-center gap-2">
                     <i class="ph-bold ph-trash"></i> Sim, Apagar
                 </button>
             </div>
@@ -778,20 +887,20 @@
                 
                 let imgThumb = item.image ? `<div class="w-full h-32 bg-gray-50 flex items-center justify-center rounded-lg mb-3 overflow-hidden relative">
                     <img src="${item.image}" class="max-w-full max-h-full object-cover">
-                    <button onclick="openCropModal('${item.id}', true)" class="absolute top-2 left-2 bg-white text-brand-blue p-2 rounded-full hover:bg-brand-blue hover:text-white transition shadow-md border border-gray-200" title="Ajustar Enquadramento Fotográfico"><i class="ph-bold ph-crop"></i></button>
+                    <button onclick="openCropModal('${item.id}', true)" class="tap-target absolute top-2 left-2 bg-white text-brand-blue p-2 rounded-full hover:bg-brand-blue hover:text-white transition shadow-md border border-gray-200" title="Ajustar Enquadramento Fotográfico"><i class="ph-bold ph-crop"></i></button>
                     </div>` : `<div class="w-full h-32 bg-gray-100 flex items-center justify-center rounded-lg mb-3"><i class="ph ph-image text-4xl text-gray-300"></i></div>`;
                 
                 card.innerHTML = `
-                    <button onclick="removeParsedCard('${item.id}')" class="absolute top-2 right-2 bg-red-50 text-red-600 p-2 rounded-full hover:bg-red-200 transition opacity-0 group-hover:opacity-100 z-10 shadow-sm border border-red-100" title="Excluir desta importação"><i class="ph-bold ph-trash"></i></button>
+                    <button onclick="removeParsedCard('${item.id}')" class="tap-target touch-reveal absolute top-2 right-2 bg-red-50 text-red-600 p-2 rounded-full hover:bg-red-200 transition opacity-100 sm:opacity-0 sm:group-hover:opacity-100 z-10 shadow-sm border border-red-100" title="Excluir desta importação"><i class="ph-bold ph-trash"></i></button>
                     ${imgThumb}
-                    <div class="grid grid-cols-2 gap-2 mb-2">
-                        <div><label class="text-[10px] font-bold text-gray-400 uppercase">Unidade</label><input type="text" value="${item.unit}" id="edit-unit-${item.id}" class="w-full font-bold text-sm text-brand-blue border-b border-gray-300 focus:outline-none bg-transparent uppercase"></div>
-                        <div><label class="text-[10px] font-bold text-gray-400 uppercase">Data</label><input type="date" value="${item.date}" id="edit-date-${item.id}" class="w-full text-xs border border-gray-300 rounded p-1 focus:outline-none font-bold text-brand-dark"></div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-2">
+                        <div><label class="text-[10px] font-bold text-gray-400 uppercase">Unidade</label><input type="text" value="${item.unit}" id="edit-unit-${item.id}" class="touch-input w-full font-bold text-sm text-brand-blue border-b border-gray-300 focus:outline-none bg-transparent uppercase"></div>
+                        <div><label class="text-[10px] font-bold text-gray-400 uppercase">Data</label><input type="date" value="${item.date}" id="edit-date-${item.id}" class="touch-input w-full text-xs border border-gray-300 rounded p-2 focus:outline-none font-bold text-brand-dark"></div>
                     </div>
-                    <div class="mb-2"><label class="flex justify-between text-[10px] font-bold text-gray-400 uppercase"><span>Manchete</span> <span>${item.title.length}/200</span></label><textarea id="edit-title-${item.id}" maxlength="200" rows="2" class="w-full text-sm font-bold border border-gray-300 rounded p-1.5 focus:outline-none bg-gray-50 resize-none text-brand-dark" style="font-family: 'Montserrat', sans-serif;">${item.title}</textarea></div>
-                    <div class="mb-2"><label class="flex justify-between text-[10px] font-bold text-gray-400 uppercase"><span>Síntese (Lead)</span> <span>${item.lead.length}/500</span></label><textarea id="edit-lead-${item.id}" maxlength="500" rows="3" class="w-full text-xs font-semibold text-brand-dark border-l-[3px] border-brand-red border-y border-r border-gray-300 rounded-r p-2 focus:outline-none bg-red-50 resize-none" style="font-family: 'Montserrat', sans-serif;">${item.lead}</textarea></div>
-                    <div class="mb-2"><label class="flex justify-between text-[10px] font-bold text-gray-400 uppercase"><span>Detalhes Institucionais</span> <span>${item.content.length}/1500</span></label><textarea id="edit-content-${item.id}" maxlength="1500" rows="3" class="w-full text-xs border border-gray-300 rounded p-2 focus:outline-none text-gray-700 leading-relaxed resize-none" style="font-family: 'Montserrat', sans-serif;">${item.content}</textarea></div>
-                    <div><label class="text-[10px] font-bold text-gray-400 uppercase">Eixo</label><select id="edit-type-${item.id}" class="w-full text-xs border border-gray-300 rounded p-1.5 focus:outline-none bg-blue-50 text-brand-blue font-semibold"><option value="Educação e Qualificação" ${item.type === 'Educação e Qualificação' ? 'selected' : ''}>Educação e Qualificação</option><option value="Saúde e Segurança" ${item.type === 'Saúde e Segurança' ? 'selected' : ''}>Saúde e Segurança</option><option value="Indústria 4.0 e Inovação" ${item.type === 'Indústria 4.0 e Inovação' ? 'selected' : ''}>Indústria 4.0 e Inovação</option><option value="Relações Institucionais" ${item.type === 'Relações Institucionais' ? 'selected' : ''}>Relações Institucionais</option></select></div>
+                    <div class="mb-2"><label class="flex justify-between text-[10px] font-bold text-gray-400 uppercase"><span>Manchete</span> <span>${item.title.length}/200</span></label><textarea id="edit-title-${item.id}" maxlength="200" rows="2" class="touch-input w-full text-sm font-bold border border-gray-300 rounded p-2 focus:outline-none bg-gray-50 resize-none text-brand-dark" style="font-family: 'Montserrat', sans-serif;">${item.title}</textarea></div>
+                    <div class="mb-2"><label class="flex justify-between text-[10px] font-bold text-gray-400 uppercase"><span>Síntese (Lead)</span> <span>${item.lead.length}/500</span></label><textarea id="edit-lead-${item.id}" maxlength="500" rows="3" class="touch-input w-full text-xs font-semibold text-brand-dark border-l-[3px] border-brand-red border-y border-r border-gray-300 rounded-r p-2 focus:outline-none bg-red-50 resize-none" style="font-family: 'Montserrat', sans-serif;">${item.lead}</textarea></div>
+                    <div class="mb-2"><label class="flex justify-between text-[10px] font-bold text-gray-400 uppercase"><span>Detalhes Institucionais</span> <span>${item.content.length}/1500</span></label><textarea id="edit-content-${item.id}" maxlength="1500" rows="3" class="touch-input w-full text-xs border border-gray-300 rounded p-2 focus:outline-none text-gray-700 leading-relaxed resize-none" style="font-family: 'Montserrat', sans-serif;">${item.content}</textarea></div>
+                    <div><label class="text-[10px] font-bold text-gray-400 uppercase">Eixo</label><select id="edit-type-${item.id}" class="touch-input w-full text-xs border border-gray-300 rounded p-2 focus:outline-none bg-blue-50 text-brand-blue font-semibold"><option value="Educação e Qualificação" ${item.type === 'Educação e Qualificação' ? 'selected' : ''}>Educação e Qualificação</option><option value="Saúde e Segurança" ${item.type === 'Saúde e Segurança' ? 'selected' : ''}>Saúde e Segurança</option><option value="Indústria 4.0 e Inovação" ${item.type === 'Indústria 4.0 e Inovação' ? 'selected' : ''}>Indústria 4.0 e Inovação</option><option value="Relações Institucionais" ${item.type === 'Relações Institucionais' ? 'selected' : ''}>Relações Institucionais</option></select></div>
                 `;
                 container.appendChild(card);
             });
@@ -942,13 +1051,13 @@
 
                 card.innerHTML = `
                     <div id="overlay-card-${item.id}" class="hidden absolute inset-0 bg-white bg-opacity-70 z-10 flex items-center justify-center pointer-events-none"><span class="bg-brand-red text-white font-black px-6 py-2 rounded shadow-lg tracking-widest border border-red-800">OCULTADO DO PDF</span></div>
-                    <div class="hide-on-pdf bg-gray-50 border-b border-gray-200 px-6 py-3 flex justify-between items-center relative z-20 mb-6 rounded"><label class="flex items-center gap-2 cursor-pointer text-sm font-bold text-brand-blue select-none hover:text-blue-800 transition"><input type="checkbox" checked onchange="togglePdfInclusion(this, 'card-${item.id}')" class="w-4 h-4 rounded text-brand-blue focus:ring-brand-blue cursor-pointer"> Incluir no Relatório (PDF)</label><div class="flex gap-2"><button onclick="editReport('${item.id}')" class="text-brand-blue hover:text-blue-800 flex items-center gap-1 text-xs font-bold transition px-3 py-1 hover:bg-blue-50 rounded border border-blue-200" title="Editar Matéria"><i class="ph-bold ph-pencil-simple text-lg"></i> Editar</button><button onclick="deleteReport('${item.id}')" class="text-gray-500 hover:text-white hover:bg-brand-red flex items-center gap-1 text-xs font-bold transition px-3 py-1 rounded border border-gray-300 hover:border-brand-red" title="Excluir Permanentemente"><i class="ph-fill ph-trash text-lg"></i> Apagar</button></div></div>
+                    <div class="report-toolbar hide-on-pdf bg-gray-50 border-b border-gray-200 px-4 sm:px-6 py-3 relative z-20 mb-6 rounded"><label class="tap-target justify-start flex items-center gap-2 cursor-pointer text-sm font-bold text-brand-blue select-none hover:text-blue-800 transition"><input type="checkbox" checked onchange="togglePdfInclusion(this, 'card-${item.id}')" class="touch-checkbox rounded text-brand-blue focus:ring-brand-blue cursor-pointer"> Incluir no Relatório (PDF)</label><div class="report-actions"><button onclick="editReport('${item.id}')" class="tap-target text-brand-blue hover:text-blue-800 flex items-center gap-1 text-xs font-bold transition px-3 py-2 hover:bg-blue-50 rounded border border-blue-200" title="Editar Matéria"><i class="ph-bold ph-pencil-simple text-lg"></i> Editar</button><button onclick="deleteReport('${item.id}')" class="tap-target text-gray-500 hover:text-white hover:bg-brand-red flex items-center gap-1 text-xs font-bold transition px-3 py-2 rounded border border-gray-300 hover:border-brand-red" title="Excluir Permanentemente"><i class="ph-fill ph-trash text-lg"></i> Apagar</button></div></div>
                     
                     <div class="pb-6">
                         <div class="border-t border-brand-blue pt-4">
                             <div class="mb-3"><span class="text-meta text-brand-blue font-black tracking-[0.2em] uppercase" style="font-family: 'Montserrat', sans-serif;">${item.unit}</span></div>
                             <h3 class="text-title font-bold text-brand-dark mb-4 leading-tight" style="font-family: 'Montserrat', sans-serif;">${item.title}</h3>
-                            <div class="text-meta flex items-center gap-6 mb-6 font-bold text-brand-gray uppercase tracking-wider" style="font-family: 'Montserrat', sans-serif;"><span class="flex items-center gap-1.5"><i class="ph-fill ph-calendar-blank text-brand-blue text-base"></i> ${formattedDate}</span><span class="flex items-center gap-1.5"><i class="ph-fill ph-tag text-brand-blue text-base"></i> ${item.type}</span></div>
+                            <div class="text-meta mobile-meta flex items-center gap-6 mb-6 font-bold text-brand-gray uppercase tracking-wider" style="font-family: 'Montserrat', sans-serif;"><span class="flex items-center gap-1.5"><i class="ph-fill ph-calendar-blank text-brand-blue text-base"></i> ${formattedDate}</span><span class="flex items-center gap-1.5"><i class="ph-fill ph-tag text-brand-blue text-base"></i> ${item.type}</span></div>
                         </div>
                         ${imageHtml}
                         <div class="max-w-none">
