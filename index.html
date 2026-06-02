@@ -45,7 +45,7 @@
     </script>
 
     <!-- Bibliotecas Necessárias -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
@@ -108,79 +108,6 @@
             gap: 0.5rem;
         }
         .mobile-only-break { display: none; }
-        
-        /* --- MODO PDF EXECUTIVO NORMATIZADO E BLINDADO --- */
-        body.pdf-mode { overflow: visible !important; width: 1000px !important; min-width: 1000px !important; background-color: #FFFFFF !important; }
-        html.pdf-mode { overflow: visible !important; width: 1000px !important; min-width: 1000px !important; background-color: #FFFFFF !important; }
-        .pdf-mode .hide-on-pdf { display: none !important; }
-        
-        /* Remove sombras para renderização plana */
-        .pdf-mode .shadow-sm, .pdf-mode .shadow-md { box-shadow: none !important; border: none !important; border-radius: 0 !important; }
-        
-        /* O Container recebe margens internas em vez de margens no jsPDF para evitar fatiamento lateral (Efeito Guilhotina) */
-        .pdf-mode #executive-dashboard {
-            background-image: none !important; 
-            padding: 0 30px !important; 
-            margin: 0 auto !important;
-            box-sizing: border-box !important;
-            width: 1000px !important;
-            max-width: 1000px !important;
-        }
-        
-        .pdf-mode #news-feed { 
-            display: block !important; 
-            width: 100% !important;
-        }
-
-        /* O SEGREDO DA NORMATIZAÇÃO: 1 PÁGINA = 1 NOTÍCIA (Sem cortes) */
-        .pdf-mode .pdf-item { 
-            display: block !important; 
-            width: 100% !important;
-            margin-bottom: 0 !important; 
-            background-color: #FFFFFF !important;
-            border: none !important; 
-            padding-bottom: 0 !important;
-            page-break-after: always !important; 
-            break-after: page !important;
-            page-break-inside: avoid !important;
-            break-inside: avoid !important;
-        }
-        
-        .pdf-mode .pdf-item:last-child {
-            page-break-after: auto !important;
-            break-after: auto !important;
-        }
-
-        /* CAIXA DE IMAGEM BLINDADA: Altura cravada em 280px para sobrar espaço ao texto de 1000 caracteres */
-        .pdf-mode .news-image-container {
-            height: 280px !important; 
-            width: 100% !important; 
-            max-width: 1000px !important;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            margin-bottom: 24px !important;
-            overflow: hidden !important; 
-            border-radius: 8px !important;
-            background-color: #F4F6F9 !important;
-        }
-        .pdf-mode .news-image {
-            height: 100% !important;
-            width: 100% !important;
-            object-fit: cover !important; 
-            display: block !important;
-            object-position: center !important;
-        }
-
-        .pdf-mode .exclude-from-pdf { display: none !important; height: 0 !important; margin: 0 !important; padding: 0 !important; overflow: hidden !important; }
-        .pdf-mode .header-logos { display: none !important; }
-        .pdf-mode #pdf-header-cover { display: block !important; }
-        
-        /* Typography overrides for PDF to ensure exact sizing */
-        .pdf-mode .text-title { font-size: 16pt !important; line-height: 1.3 !important; }
-        .pdf-mode .text-lead { font-size: 12pt !important; line-height: 1.5 !important; }
-        .pdf-mode .text-body { font-size: 11pt !important; line-height: 1.6 !important; }
-        .pdf-mode .text-meta { font-size: 10pt !important; }
         
         /* Custom Scrollbar */
         ::-webkit-scrollbar { width: 8px; }
@@ -269,15 +196,15 @@
     <!-- Overlay de Loading -->
     <div id="pdf-loading" class="fixed inset-0 bg-white bg-opacity-90 z-[999] hidden flex-col items-center justify-center" role="status" aria-live="polite" aria-atomic="true" aria-hidden="true">
         <i class="ph ph-spinner animate-spin text-6xl text-brand-blue mb-4" aria-hidden="true"></i>
-        <h2 class="text-2xl font-bold text-brand-dark">Gerando Relatório Oficial...</h2>
-        <p class="text-brand-gray mt-2 font-semibold italic" id="pdf-loading-text">Validando métricas, tipografia e blindando páginas.</p>
+        <h2 class="text-2xl font-bold text-brand-dark">Gerando relatório oficial...</h2>
+        <p class="text-brand-gray mt-2 font-semibold italic" id="pdf-loading-text">Preparando pautas, imagens e paginação.</p>
     </div>
 
     <!-- Container Principal -->
     <div id="executive-dashboard" class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
         
         <!-- Cabeçalho Principal (Web) -->
-        <header class="flex flex-col md:flex-row justify-between items-start border-b-2 border-brand-blue pb-6 mb-8 bg-white/90 p-4 sm:p-6 rounded-xl shadow-sm hide-on-pdf">
+        <header class="flex flex-col md:flex-row justify-between items-start border border-blue-100 mb-8 bg-white/90 p-4 sm:p-6 rounded-xl shadow-sm hide-on-pdf">
             <div class="flex-1">
                 <div class="flex items-start sm:items-center gap-3 mb-2">
                     <i class="ph-fill ph-buildings text-3xl text-brand-blue" aria-hidden="true"></i>
@@ -306,12 +233,6 @@
                 </div>
             </div>
         </header>
-
-        <!-- Capa Invisível para PDF -->
-        <div id="pdf-header-cover" class="hidden mb-12 border-b-2 border-brand-blue pb-4">
-            <h1 class="text-3xl font-black text-brand-blue tracking-tight mt-4" style="font-family: 'Montserrat', sans-serif;">INFORME EXECUTIVO</h1>
-            <p class="text-brand-dark font-bold text-sm uppercase mt-1">Sistema FIEG <span id="pdf-date-subtitle"></span></p>
-        </div>
 
         <!-- Filtros em Tempo Real -->
         <div class="bg-white p-4 sm:p-5 rounded-xl shadow-sm mb-10 flex flex-col gap-4 border border-gray-100 hide-on-pdf" id="filters-container">
@@ -516,6 +437,7 @@
         // --- PREVENÇÃO DE ERROS DE DECLARAÇÃO E NOVA BASE DE DADOS (INDEXEDDB) ---
         var reports = [];
         var parsedReportsCache = []; 
+        var currentFilterSubtitle = '';
 
         function escapeHtml(value) {
             return String(value ?? '').replace(/[&<>"']/g, (char) => ({
@@ -1051,12 +973,20 @@
             if(startMonth || endMonth) { filtered = filtered.filter(r => { if(!r.date) return false; const rMonth = r.date.substring(0, 7); if(startMonth && rMonth < startMonth) return false; if(endMonth && rMonth > endMonth) return false; return true; }); }
             if(startDate || endDate) { filtered = filtered.filter(r => { if(!r.date) return false; if(startDate && r.date < startDate) return false; if(endDate && r.date > endDate) return false; return true; }); }
             let subtitle = []; if(unitText) subtitle.push(`Busca: ${unitText}`); if(type !== 'all') subtitle.push(type); if(startMonth && endMonth) subtitle.push(`Meses: ${startMonth.split('-').reverse().join('/')} a ${endMonth.split('-').reverse().join('/')}`); else if(startMonth) subtitle.push(`A partir do mês: ${startMonth.split('-').reverse().join('/')}`); else if(endMonth) subtitle.push(`Até o mês: ${endMonth.split('-').reverse().join('/')}`); if(startDate && endDate) subtitle.push(`De ${startDate.split('-').reverse().join('/')} até ${endDate.split('-').reverse().join('/')}`); else if(startDate) subtitle.push(`A partir de ${startDate.split('-').reverse().join('/')}`); else if(endDate) subtitle.push(`Até ${endDate.split('-').reverse().join('/')}`);
-            const displayEl = document.getElementById('active-filters-display'); if(displayEl) { displayEl.innerText = subtitle.length > 0 ? `| Filtros Ativos: ${subtitle.join(' • ')}` : ''; }
-            const pdfSubtitleEl = document.getElementById('pdf-date-subtitle'); if(pdfSubtitleEl) { pdfSubtitleEl.innerText = subtitle.length > 0 ? ` - ${subtitle.join(' • ')}` : ''; }
+            currentFilterSubtitle = subtitle.join(' • ');
+            const displayEl = document.getElementById('active-filters-display'); if(displayEl) { displayEl.innerText = currentFilterSubtitle ? `| Filtros Ativos: ${currentFilterSubtitle}` : ''; }
             renderNewsFeed(filtered);
         }
 
         window.clearFilters = function() { if(document.getElementById('filter-unit-text')) document.getElementById('filter-unit-text').value = ''; if(document.getElementById('filter-type')) document.getElementById('filter-type').value = 'all'; if(document.getElementById('filter-start-month')) document.getElementById('filter-start-month').value = ''; if(document.getElementById('filter-end-month')) document.getElementById('filter-end-month').value = ''; if(document.getElementById('filter-start-date')) document.getElementById('filter-start-date').value = ''; if(document.getElementById('filter-end-date')) document.getElementById('filter-end-date').value = ''; applyFilters(); }
+
+        function formatReportDate(dateValue) {
+            if (!dateValue) return 'Data Indefinida';
+            const [y, m, d] = dateValue.split('-');
+            const dateObj = new Date(y, m - 1, d);
+            if (isNaN(dateObj)) return 'Data Indefinida';
+            return new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' }).format(dateObj);
+        }
 
         function renderNewsFeed(data) {
             const feed = document.getElementById('news-feed'); if(!feed) return; feed.innerHTML = '';
@@ -1064,7 +994,7 @@
             const sortedData = [...data].sort((a, b) => new Date(b.date) - new Date(a.date));
             
             sortedData.forEach(item => {
-                let formattedDate = 'Data Indefinida'; if(item.date) { const [y, m, d] = item.date.split('-'); const dateObj = new Date(y, m - 1, d); if(!isNaN(dateObj)) { formattedDate = new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' }).format(dateObj); } }
+                let formattedDate = formatReportDate(item.date);
                 const safeUnit = escapeHtml(item.unit);
                 const safeTitle = escapeHtml(item.title);
                 const safeType = escapeHtml(item.type);
@@ -1111,70 +1041,311 @@
 
         function loadBase64Image(url) {
             return new Promise((resolve) => {
-                const img = new Image(); img.crossOrigin = 'Anonymous'; img.onload = () => { const canvas = document.createElement('canvas'); canvas.width = img.width; canvas.height = img.height; canvas.getContext('2d').drawImage(img, 0, 0); resolve({ dataUrl: canvas.toDataURL('image/png'), width: img.width, height: img.height }); }; img.onerror = () => resolve(null); img.src = url;
+                const img = new Image();
+                img.crossOrigin = 'Anonymous';
+                img.onload = () => {
+                    try {
+                        const canvas = document.createElement('canvas');
+                        canvas.width = img.width;
+                        canvas.height = img.height;
+                        canvas.getContext('2d').drawImage(img, 0, 0);
+                        resolve({ dataUrl: canvas.toDataURL('image/png'), width: img.width, height: img.height });
+                    } catch (e) {
+                        resolve(null);
+                    }
+                };
+                img.onerror = () => resolve(null);
+                img.src = url;
             });
         }
 
-        window.exportToPDF = async function() {
-            const btn = document.getElementById('btn-export'); 
-            const originalText = btn.innerHTML; 
-            const loadingOverlay = document.getElementById('pdf-loading'); 
-            
-            btn.disabled = true;
-            loadingOverlay.classList.remove('hidden'); 
-            loadingOverlay.classList.add('flex'); 
-            loadingOverlay.setAttribute('aria-hidden', 'false');
-            
-            window.scrollTo(0, 0); 
-            document.body.classList.add('pdf-mode');
-            
-            // Garantia adicional de layout plano antes do canvas fotografar
-            await new Promise(resolve => setTimeout(resolve, 800));
+        const PDF_LOGO_URL = "https://i.postimg.cc/HWKTMyKs/sistema-fieg-02.png";
+        const PDF_THEME = {
+            blue: [0, 58, 112],
+            red: [227, 25, 55],
+            dark: [43, 45, 66],
+            gray: [91, 102, 122],
+            border: [229, 231, 235],
+            light: [244, 246, 249],
+            leadBg: [254, 242, 242]
+        };
 
-            const element = document.getElementById('executive-dashboard');
-            const headerLogo = await loadBase64Image("https://i.postimg.cc/HWKTMyKs/sistema-fieg-02.png");
+        function getPdfLibrary() {
+            return window.jspdf?.jsPDF || window.jsPDF || null;
+        }
 
-            const opt = { 
-                margin: [25, 15, 20, 15], 
-                filename: `Informe_Executivo_FIEG_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.pdf`, 
-                image: { type: 'jpeg', quality: 1.0 }, 
-                html2canvas: { scale: 2, useCORS: true, letterRendering: true, windowWidth: 1000, width: 1000, scrollX: 0, scrollY: 0 }, 
-                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }, 
-                pagebreak: { mode: ['css', 'legacy'] } 
+        function setPdfTextColor(pdf, color) {
+            pdf.setTextColor(color[0], color[1], color[2]);
+        }
+
+        function setPdfDrawColor(pdf, color) {
+            pdf.setDrawColor(color[0], color[1], color[2]);
+        }
+
+        function setPdfFillColor(pdf, color) {
+            pdf.setFillColor(color[0], color[1], color[2]);
+        }
+
+        function normalizePdfText(value) {
+            return String(value ?? '').replace(/[ \t\r\f\v]+/g, ' ').replace(/\n{3,}/g, '\n\n').trim();
+        }
+
+        function getDataUrlImageFormat(dataUrl) {
+            if (/^data:image\/png/i.test(dataUrl)) return 'PNG';
+            if (/^data:image\/webp/i.test(dataUrl)) return 'WEBP';
+            return 'JPEG';
+        }
+
+        function getCurrentPdfSubtitle() {
+            return currentFilterSubtitle || 'Todas as pautas';
+        }
+
+        function getReportsSelectedForPdf() {
+            const cards = Array.from(document.querySelectorAll('#news-feed .pdf-item:not(.exclude-from-pdf)'));
+            const reportsById = new Map(reports.map(report => [report.id, report]));
+            return cards
+                .map(card => reportsById.get(card.id.replace(/^card-/, '')))
+                .filter(Boolean);
+        }
+
+        function drawPdfChrome(pdf, logo) {
+            const pageWidth = pdf.internal.pageSize.getWidth();
+            const pageHeight = pdf.internal.pageSize.getHeight();
+            const totalPages = pdf.internal.getNumberOfPages();
+
+            for (let pageNumber = 1; pageNumber <= totalPages; pageNumber++) {
+                pdf.setPage(pageNumber);
+                setPdfDrawColor(pdf, PDF_THEME.blue);
+                pdf.setLineWidth(0.3);
+                pdf.line(15, 25, pageWidth - 15, 25);
+
+                if (logo) {
+                    const imgWidth = 24;
+                    const imgHeight = (logo.height * imgWidth) / logo.width;
+                    pdf.addImage(logo.dataUrl, 'PNG', pageWidth - 15 - imgWidth, 8, imgWidth, imgHeight);
+                }
+
+                pdf.setFont('helvetica', 'normal');
+                pdf.setFontSize(8);
+                setPdfTextColor(pdf, PDF_THEME.gray);
+                pdf.text(`Informe Executivo Institucional Sistema FIEG - Pág. ${pageNumber} de ${totalPages}`, 15, pageHeight - 10);
+            }
+        }
+
+        async function buildOfficialPdf(selectedReports) {
+            const PdfClass = getPdfLibrary();
+            if (!PdfClass) {
+                throw new Error('A biblioteca de PDF não foi carregada.');
+            }
+
+            const pdf = new PdfClass({ unit: 'mm', format: 'a4', orientation: 'portrait', compress: true });
+            const logo = await loadBase64Image(PDF_LOGO_URL);
+            const page = {
+                width: pdf.internal.pageSize.getWidth(),
+                height: pdf.internal.pageSize.getHeight(),
+                marginX: 16,
+                top: 36,
+                bottom: 24,
+                contentWidth: 178
             };
 
-            html2pdf().set(opt).from(element).toPdf().get('pdf').then(function (pdf) {
-                const totalPages = pdf.internal.getNumberOfPages();
-                for (let i = 1; i <= totalPages; i++) {
-                    pdf.setPage(i);
-                    
-                    if(headerLogo) { 
-                        const imgWidth = 22; 
-                        const imgHeight = (headerLogo.height * imgWidth) / headerLogo.width; 
-                        pdf.addImage(headerLogo.dataUrl, 'PNG', 173, 10, imgWidth, imgHeight); 
-                    }
-                    
-                    pdf.setDrawColor(0, 58, 112); pdf.setLineWidth(0.3); pdf.line(15, 25, 195, 25);
-                    
-                    pdf.setFontSize(8); pdf.setTextColor(150); pdf.setFont('Montserrat'); 
-                    pdf.text(`Informe Executivo Institucional Sistema FIEG - Pág. ${i} de ${totalPages}`, 15, 285);
+            function writeLines(lines, x, y, lineHeight, options = {}) {
+                lines.forEach((line) => {
+                    pdf.text(line, x, y, options);
+                    y += lineHeight;
+                });
+                return y;
+            }
+
+            function drawCover() {
+                const subtitle = getCurrentPdfSubtitle();
+                const today = new Intl.DateTimeFormat('pt-BR', { dateStyle: 'long' }).format(new Date());
+                let y = 50;
+
+                pdf.setFont('helvetica', 'bold');
+                pdf.setFontSize(23);
+                setPdfTextColor(pdf, PDF_THEME.blue);
+                pdf.text('INFORME EXECUTIVO', page.marginX, y);
+
+                y += 10;
+                pdf.setFontSize(11);
+                setPdfTextColor(pdf, PDF_THEME.dark);
+                pdf.text('Sistema FIEG', page.marginX, y);
+
+                y += 18;
+                setPdfFillColor(pdf, PDF_THEME.light);
+                setPdfDrawColor(pdf, PDF_THEME.border);
+                pdf.roundedRect(page.marginX, y, page.contentWidth, 38, 2, 2, 'FD');
+
+                pdf.setFont('helvetica', 'bold');
+                pdf.setFontSize(10);
+                setPdfTextColor(pdf, PDF_THEME.blue);
+                pdf.text('Resumo da exportação', page.marginX + 6, y + 9);
+
+                pdf.setFont('helvetica', 'normal');
+                pdf.setFontSize(9);
+                setPdfTextColor(pdf, PDF_THEME.dark);
+                pdf.text(`Pautas exportadas: ${selectedReports.length}`, page.marginX + 6, y + 18);
+                pdf.text(`Gerado em: ${today}`, page.marginX + 6, y + 25);
+
+                const subtitleLines = pdf.splitTextToSize(`Filtros: ${subtitle}`, page.contentWidth - 12);
+                writeLines(subtitleLines, page.marginX + 6, y + 32, 4.2);
+            }
+
+            function renderReport(report, reportIndex) {
+                pdf.addPage();
+                let y = page.top;
+                const title = normalizePdfText(report.title || 'Matéria sem título');
+                const unit = normalizePdfText(report.unit || 'Unidade não informada').toUpperCase();
+                const date = formatReportDate(report.date);
+                const type = normalizePdfText(report.type || 'Eixo não informado');
+
+                function addContinuationPage() {
+                    pdf.addPage();
+                    y = page.top;
+                    pdf.setFont('helvetica', 'bold');
+                    pdf.setFontSize(8);
+                    setPdfTextColor(pdf, PDF_THEME.gray);
+                    const continuationTitle = pdf.splitTextToSize(`${title} | continuação`, page.contentWidth);
+                    y = writeLines(continuationTitle, page.marginX, y, 4.2);
+                    y += 6;
                 }
-            }).save().then(() => {
-                document.body.classList.remove('pdf-mode'); 
-                loadingOverlay.classList.remove('flex'); 
-                loadingOverlay.classList.add('hidden');
-                loadingOverlay.setAttribute('aria-hidden', 'true');
-                btn.innerHTML = originalText;
-                btn.disabled = false;
-            }).catch((e) => {
-                alert("⚠️ Houve um erro ao processar o PDF.");
-                document.body.classList.remove('pdf-mode'); 
+
+                function ensureSpace(requiredHeight) {
+                    if (y + requiredHeight > page.height - page.bottom) {
+                        addContinuationPage();
+                    }
+                }
+
+                pdf.setFont('helvetica', 'bold');
+                pdf.setFontSize(8);
+                setPdfTextColor(pdf, PDF_THEME.blue);
+                const unitLines = pdf.splitTextToSize(unit, page.contentWidth);
+                y = writeLines(unitLines, page.marginX, y, 4.2);
+                y += 3;
+
+                pdf.setFont('helvetica', 'bold');
+                pdf.setFontSize(16);
+                setPdfTextColor(pdf, PDF_THEME.dark);
+                const titleLines = pdf.splitTextToSize(title, page.contentWidth);
+                ensureSpace(titleLines.length * 7 + 15);
+                y = writeLines(titleLines, page.marginX, y, 7);
+                y += 5;
+
+                pdf.setFont('helvetica', 'bold');
+                pdf.setFontSize(8.5);
+                setPdfTextColor(pdf, PDF_THEME.gray);
+                const metaLines = pdf.splitTextToSize(`${date}  |  ${type}`, page.contentWidth);
+                y = writeLines(metaLines, page.marginX, y, 4.5);
+                y += 8;
+
+                if (report.image) {
+                    const imageHeight = page.contentWidth / 2;
+                    ensureSpace(imageHeight + 10);
+                    try {
+                        pdf.addImage(report.image, getDataUrlImageFormat(report.image), page.marginX, y, page.contentWidth, imageHeight, undefined, 'FAST');
+                    } catch (e) {
+                        setPdfFillColor(pdf, PDF_THEME.light);
+                        setPdfDrawColor(pdf, PDF_THEME.border);
+                        pdf.rect(page.marginX, y, page.contentWidth, imageHeight, 'FD');
+                        pdf.setFont('helvetica', 'bold');
+                        pdf.setFontSize(9);
+                        setPdfTextColor(pdf, PDF_THEME.gray);
+                        pdf.text('Imagem indisponível para exportação', page.marginX + 6, y + 12);
+                    }
+                    y += imageHeight + 10;
+                }
+
+                const lead = normalizePdfText(report.lead);
+                if (lead) {
+                    pdf.setFont('helvetica', 'bold');
+                    pdf.setFontSize(11);
+                    const leadLines = pdf.splitTextToSize(lead, page.contentWidth - 10);
+                    const boxHeight = Math.max(20, leadLines.length * 5.5 + 10);
+                    ensureSpace(boxHeight + 7);
+                    setPdfFillColor(pdf, PDF_THEME.leadBg);
+                    setPdfDrawColor(pdf, PDF_THEME.red);
+                    pdf.roundedRect(page.marginX, y, page.contentWidth, boxHeight, 2, 2, 'FD');
+                    setPdfTextColor(pdf, PDF_THEME.dark);
+                    writeLines(leadLines, page.marginX + 5, y + 8, 5.5);
+                    y += boxHeight + 8;
+                }
+
+                const paragraphs = String(report.content || '')
+                    .split(/\n+/)
+                    .map(normalizePdfText)
+                    .filter(Boolean);
+
+                pdf.setFont('helvetica', 'normal');
+                pdf.setFontSize(10.5);
+                setPdfTextColor(pdf, [31, 41, 55]);
+
+                if (paragraphs.length === 0) {
+                    ensureSpace(8);
+                    pdf.setFont('helvetica', 'italic');
+                    setPdfTextColor(pdf, PDF_THEME.gray);
+                    pdf.text('Sem corpo institucional informado.', page.marginX, y);
+                    return;
+                }
+
+                paragraphs.forEach((paragraph) => {
+                    pdf.setFont('helvetica', 'normal');
+                    pdf.setFontSize(10.5);
+                    setPdfTextColor(pdf, [31, 41, 55]);
+                    const bodyLines = pdf.splitTextToSize(paragraph, page.contentWidth);
+                    bodyLines.forEach((line) => {
+                        ensureSpace(5.7);
+                        pdf.text(line, page.marginX, y);
+                        y += 5.7;
+                    });
+                    y += 3.5;
+                });
+
+                pdf.setFont('helvetica', 'bold');
+                pdf.setFontSize(7.5);
+                setPdfTextColor(pdf, PDF_THEME.gray);
+                pdf.text(`Pauta ${reportIndex} de ${selectedReports.length}`, page.marginX, page.height - 16);
+            }
+
+            drawCover();
+            selectedReports.forEach(renderReport);
+            drawPdfChrome(pdf, logo);
+            return pdf;
+        }
+
+        window.exportToPDF = async function() {
+            const btn = document.getElementById('btn-export');
+            const loadingOverlay = document.getElementById('pdf-loading');
+            const loadingText = document.getElementById('pdf-loading-text');
+            const originalText = btn.innerHTML;
+            const selectedReports = getReportsSelectedForPdf();
+
+            if (selectedReports.length === 0) {
+                alert("Nenhuma pauta selecionada para o PDF. Revise os filtros ou marque pelo menos uma matéria para inclusão.");
+                return;
+            }
+
+            try {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="ph ph-file-pdf text-xl" aria-hidden="true"></i> Gerando PDF...';
+                loadingText.innerText = `Compondo ${selectedReports.length} pauta${selectedReports.length > 1 ? 's' : ''} com paginação oficial.`;
+                loadingOverlay.classList.remove('hidden');
+                loadingOverlay.classList.add('flex');
+                loadingOverlay.setAttribute('aria-hidden', 'false');
+
+                const pdf = await buildOfficialPdf(selectedReports);
+                pdf.save(`Informe_Executivo_FIEG_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.pdf`);
+            } catch (e) {
+                console.error(e);
+                alert("Houve um erro ao processar o PDF. Recarregue a página e tente novamente.");
+            } finally {
                 loadingOverlay.classList.add('hidden');
                 loadingOverlay.classList.remove('flex');
                 loadingOverlay.setAttribute('aria-hidden', 'true');
+                loadingText.innerText = 'Preparando pautas, imagens e paginação.';
                 btn.innerHTML = originalText;
                 btn.disabled = false;
-            });
+            }
         }
     </script>
 </body>
