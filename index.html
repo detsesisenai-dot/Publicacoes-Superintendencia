@@ -1030,7 +1030,7 @@
                         </div>
                         ${imageHtml}
                         <div class="max-w-none">
-                            ${item.lead ? `<div class="text-lead mb-5 text-justify text-brand-dark font-semibold border border-red-200 bg-red-50 py-3 px-4 rounded" style="font-family: 'Montserrat', sans-serif;">${escapeHtml(item.lead)}</div>` : ''}
+                            ${item.lead ? `<div class="text-lead mb-5 text-justify text-brand-dark font-semibold border border-gray-200 bg-gray-50 py-3 px-4 rounded" style="font-family: 'Montserrat', sans-serif;">${escapeHtml(item.lead)}</div>` : ''}
                             ${paragraphsHtml}
                         </div>
                     </div>
@@ -1062,12 +1062,12 @@
         const PDF_LOGO_URL = "https://i.postimg.cc/HWKTMyKs/sistema-fieg-02.png";
         const PDF_THEME = {
             blue: [0, 58, 112],
-            red: [227, 25, 55],
             dark: [43, 45, 66],
             gray: [91, 102, 122],
             border: [229, 231, 235],
             light: [244, 246, 249],
-            leadBg: [254, 242, 242]
+            leadBg: [249, 250, 251],
+            leadBorder: [229, 231, 235]
         };
 
         function getPdfLibrary() {
@@ -1094,10 +1094,6 @@
             if (/^data:image\/png/i.test(dataUrl)) return 'PNG';
             if (/^data:image\/webp/i.test(dataUrl)) return 'WEBP';
             return 'JPEG';
-        }
-
-        function getCurrentPdfSubtitle() {
-            return currentFilterSubtitle || 'Todas as pautas';
         }
 
         function getReportsSelectedForPdf() {
@@ -1157,43 +1153,10 @@
                 return y;
             }
 
-            function drawCover() {
-                const subtitle = getCurrentPdfSubtitle();
-                const today = new Intl.DateTimeFormat('pt-BR', { dateStyle: 'long' }).format(new Date());
-                let y = 50;
-
-                pdf.setFont('helvetica', 'bold');
-                pdf.setFontSize(23);
-                setPdfTextColor(pdf, PDF_THEME.blue);
-                pdf.text('INFORME EXECUTIVO', page.marginX, y);
-
-                y += 10;
-                pdf.setFontSize(11);
-                setPdfTextColor(pdf, PDF_THEME.dark);
-                pdf.text('Sistema FIEG', page.marginX, y);
-
-                y += 18;
-                setPdfFillColor(pdf, PDF_THEME.light);
-                setPdfDrawColor(pdf, PDF_THEME.border);
-                pdf.roundedRect(page.marginX, y, page.contentWidth, 38, 2, 2, 'FD');
-
-                pdf.setFont('helvetica', 'bold');
-                pdf.setFontSize(10);
-                setPdfTextColor(pdf, PDF_THEME.blue);
-                pdf.text('Resumo da exportação', page.marginX + 6, y + 9);
-
-                pdf.setFont('helvetica', 'normal');
-                pdf.setFontSize(9);
-                setPdfTextColor(pdf, PDF_THEME.dark);
-                pdf.text(`Pautas exportadas: ${selectedReports.length}`, page.marginX + 6, y + 18);
-                pdf.text(`Gerado em: ${today}`, page.marginX + 6, y + 25);
-
-                const subtitleLines = pdf.splitTextToSize(`Filtros: ${subtitle}`, page.contentWidth - 12);
-                writeLines(subtitleLines, page.marginX + 6, y + 32, 4.2);
-            }
-
             function renderReport(report, reportIndex) {
-                pdf.addPage();
+                if (reportIndex > 1) {
+                    pdf.addPage();
+                }
                 let y = page.top;
                 const title = normalizePdfText(report.title || 'Matéria sem título');
                 const unit = normalizePdfText(report.unit || 'Unidade não informada').toUpperCase();
@@ -1264,7 +1227,7 @@
                     const boxHeight = Math.max(20, leadLines.length * 5.5 + 10);
                     ensureSpace(boxHeight + 7);
                     setPdfFillColor(pdf, PDF_THEME.leadBg);
-                    setPdfDrawColor(pdf, PDF_THEME.red);
+                    setPdfDrawColor(pdf, PDF_THEME.leadBorder);
                     pdf.roundedRect(page.marginX, y, page.contentWidth, boxHeight, 2, 2, 'FD');
                     setPdfTextColor(pdf, PDF_THEME.dark);
                     writeLines(leadLines, page.marginX + 5, y + 8, 5.5);
@@ -1307,8 +1270,7 @@
                 pdf.text(`Pauta ${reportIndex} de ${selectedReports.length}`, page.marginX, page.height - 16);
             }
 
-            drawCover();
-            selectedReports.forEach(renderReport);
+            selectedReports.forEach((report, index) => renderReport(report, index + 1));
             drawPdfChrome(pdf, logo);
             return pdf;
         }
