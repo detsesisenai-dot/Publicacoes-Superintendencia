@@ -456,6 +456,7 @@
             lead: 500,
             content: 1500
         });
+        const JOURNALISTIC_TITLE_MAX = 140;
 
         function escapeHtml(value) {
             return String(value ?? '').replace(/[&<>"']/g, (char) => ({
@@ -741,7 +742,8 @@
             return normalized
                 .toLowerCase()
                 .replace(/\b(sesi|senai|fatec|fieg)\b/g, token => token.toUpperCase())
-                .replace(/(^|[\s/-])([a-záéíóúâêôãõç])/g, (_, prefix, letter) => `${prefix}${letter.toUpperCase()}`);
+                .replace(/(^|[\s/-])([a-záéíóúâêôãõç])/g, (_, prefix, letter) => `${prefix}${letter.toUpperCase()}`)
+                .replace(/\bE\b/g, 'e');
         }
 
         function normalizeForComparison(text) {
@@ -810,6 +812,166 @@
             return fallbackVerbs[hash % fallbackVerbs.length];
         }
 
+        function headlineSubjectIsPlural(unitLabel) {
+            const value = normalizeEditorialWhitespace(unitLabel, false);
+            return /\s+e\s+/i.test(value) && !/^SESI\s+SENAI\b/i.test(value);
+        }
+
+        function conjugateHeadlineVerb(verb, unitLabel = '') {
+            const plural = headlineSubjectIsPlural(unitLabel);
+            const forms = {
+                realiza: ['realiza', 'realizam'],
+                promove: ['promove', 'promovem'],
+                fortalece: ['fortalece', 'fortalecem'],
+                apresenta: ['apresenta', 'apresentam'],
+                registra: ['registra', 'registram'],
+                evidencia: ['evidencia', 'evidenciam'],
+                ressalta: ['ressalta', 'ressaltam'],
+                valoriza: ['valoriza', 'valorizam'],
+                participa: ['participa', 'participam'],
+                recebe: ['recebe', 'recebem']
+            };
+
+            return forms[verb] ? forms[verb][plural ? 1 : 0] : verb;
+        }
+
+        function cleanHeadlineFragment(fragment, maxLength = 76) {
+            let value = normalizeEditorialWhitespace(fragment, false)
+                .replace(/\s*\([^)]{6,}\)\s*/g, ' ')
+                .replace(/\b(?:Sr|Sra|Srta)\.?\s+.*$/i, '')
+                .replace(/\s+(?:onde|com o objetivo|visando|com o intuito|com a finalidade|para alinhar|no período)\b.*$/i, '')
+                .replace(/[,:;.\s]+$/g, '')
+                .trim();
+
+            value = semanticTrim(value, maxLength, false).replace(/[.!?]$/g, '').trim();
+            return value;
+        }
+
+        function extractInstitutionalContext(sourceText) {
+            const value = normalizeEditorialWhitespace(sourceText, false).split(/\bonde\b/i)[0];
+            const patterns = [
+                { regex: /\b(?:na|à)\s+indústria\s+([^,.;]+)/i, prefix: 'à indústria' },
+                { regex: /\b(?:na|à)\s+empresa\s+([^,.;]+)/i, prefix: 'na empresa' },
+                { regex: /\b(?:no|ao)\s+SESI\s+([^,.;]+)/i, prefix: 'no SESI' },
+                { regex: /\b(?:no|ao)\s+SENAI\s+([^,.;]+)/i, prefix: 'no SENAI' },
+                { regex: /\b(?:na|à)\s+unidade\s+([^,.;]+)/i, prefix: 'na unidade' }
+            ];
+
+            for (const item of patterns) {
+                const match = value.match(item.regex);
+                if (match && match[1]) {
+                    const target = cleanHeadlineFragment(match[1], 44);
+                    return target ? `${item.prefix} ${target}` : '';
+                }
+            }
+
+            return '';
+        }
+
+        function extractCertificationSubject(sourceText) {
+            const value = normalizeEditorialWhitespace(sourceText, false);
+            const match = value.match(/\b(?:para|da|de)\s+(Certificação[^,.;]+)/i);
+            if (match && match[1]) {
+                return cleanHeadlineFragment(match[1], 74).replace(/\bInternacional\b/g, 'internacional');
+            }
+            if (/\bcertifica/i.test(value)) return 'certificação profissional';
+            return '';
+        }
+
+        function extractNamedAction(sourceText, actionWord) {
+            const value = normalizeEditorialWhitespace(sourceText, false);
+            const regex = new RegExp(`\\b${actionWord}\\s+(?:de\\s+)?([^,.;]+)`, 'i');
+            const match = value.match(regex);
+            if (!match || !match[1]) return '';
+
+            const detail = cleanHeadlineFragment(match[1], 54);
+            return detail ? `${actionWord} de ${lowerFirstLetter(detail)}` : actionWord;
+        }
+
+        function buildHeadline(subject, verb, complement) {
+            const title = `${subject} ${conjugateHeadlineVerb(verb, subject)} ${complement}`.replace(/\s+/g, ' ').trim();
+            return semanticTrim(title, JOURNALISTIC_TITLE_MAX, false).replace(/[.!?]$/g, '');
+        }
+
+        function extractConciseHeadlineTopic(sourceText, unitLabel = '') {
+            let value = simplifyWeakHeadlineOpening(removeLegacyAutoHighlightPrefix(stripIntroductoryDate(sourceText), unitLabel));
+            value = value
+                .replace(/^(?:o|a|os|as)\s+(?:diretor(?:a)?|gerente|supervisor(?:a)?|instrutor(?:a)?|coordenador(?:a)?|analista|equipe|alunos?)\b.{0,160}?\b(?:realizou|realizaram|participou|participaram|promoveu|promoveram|recebeu|receberam|apresentou|apresentaram)\s+(?:de\s+)?/i, '')
+                .replace(/^(?:a unidade|a instituição|representantes da unidade|a equipe institucional)\s+(?:realizou|realizaram|promoveu|promoveram|participou|participaram|recebeu|receberam|apresentou|apresentaram|desenvolveu|desenvolveram)\s+(?:de\s+)?/i, '')
+                .replace(/^(?:realizou|realizaram|promoveu|promoveram|participou|participaram|recebeu|receberam|apresentou|apresentaram|desenvolveu|desenvolveram)\s+(?:de\s+)?/i, '')
+                .replace(/^fo(?:i|ram)\s+(?:realizad[ao]s?|promovid[ao]s?|apresentad[ao]s?|entregues?|iniciad[ao]s?|desenvolvid[ao]s?)\s+(?:de\s+)?/i, '');
+
+            value = value.split(/\s*,\s*(?:onde|com o objetivo|visando|com o intuito|para|no período)\b/i)[0];
+            return cleanHeadlineFragment(value, 66);
+        }
+
+        function synthesizeJournalisticTitle(sourceText, unit = '') {
+            const source = simplifyWeakHeadlineOpening(removeLegacyAutoHighlightPrefix(stripIntroductoryDate(sourceText), formatUnitForHeadline(unit)));
+            const subject = formatUnitForHeadline(unit) || 'A unidade';
+            const context = normalizeForComparison(source);
+            const place = extractInstitutionalContext(source);
+
+            if (/\bvisita\b/.test(context) && /\b(tecnica|comercial|industria|empresa)\b/.test(context)) {
+                const visitType = /\btecnica\s*comercial\b|\btecnica\s+e\s+comercial\b|\bcomercial\b/.test(context)
+                    ? 'visita técnica e comercial'
+                    : 'visita técnica';
+                return buildHeadline(subject, 'realiza', `${visitType}${place ? ` ${place}` : ''}`);
+            }
+
+            if (/\breuniao\b/.test(context)) {
+                return buildHeadline(subject, 'participa', `de reunião${place ? ` ${place}` : ' institucional'}`);
+            }
+
+            if (/\bavaliacao\b/.test(context) || /\bprova\b/.test(context) || /\bcertificacao\b/.test(context)) {
+                const certification = extractCertificationSubject(source);
+                const complement = certification ? `avaliação para ${lowerFirstLetter(certification)}` : 'avaliação de certificação';
+                return buildHeadline(subject, 'realiza', complement);
+            }
+
+            if (/\b(oficina|palestra|curso|treinamento|workshop)\b/.test(context)) {
+                const activity = extractNamedAction(source, 'curso') || extractNamedAction(source, 'oficina') || extractNamedAction(source, 'palestra') || extractNamedAction(source, 'treinamento') || 'atividade formativa';
+                return buildHeadline(subject, 'promove', lowerFirstLetter(activity));
+            }
+
+            if (/\b(parceria|alinhamento|prospecta|empresa|industria)\b/.test(context)) {
+                return buildHeadline(subject, 'fortalece', `relacionamento institucional${place ? ` ${place}` : ''}`);
+            }
+
+            const topic = extractConciseHeadlineTopic(source, subject);
+            if (topic) {
+                return buildHeadline(subject, selectHeadlinePrefixVerb(topic, subject, source), lowerFirstLetter(topic));
+            }
+
+            return buildHeadline(subject, 'registra', 'pauta institucional');
+        }
+
+        function getSignificantTitleTokens(text) {
+            const stopwords = new Set(['para', 'com', 'uma', 'um', 'que', 'onde', 'pelo', 'pela', 'dos', 'das', 'de', 'do', 'da', 'em', 'no', 'na', 'ao', 'aos', 'as', 'os', 'e', 'o', 'a', 'sesi', 'senai', 'fieg']);
+            return normalizeForComparison(text)
+                .split(/\s+/)
+                .filter(token => token.length > 3 && !stopwords.has(token));
+        }
+
+        function titleLooksCopiedFromSource(title, sourceText) {
+            const cleanTitle = normalizeEditorialWhitespace(title, false);
+            const source = normalizeEditorialWhitespace(sourceText, false);
+            if (!cleanTitle || !source || cleanTitle.length < 90) return false;
+
+            const titleKey = normalizeForComparison(cleanTitle);
+            const sourceKey = normalizeForComparison(source);
+            if (sourceKey.includes(titleKey) && titleKey.split(/\s+/).length >= 8) return true;
+
+            const titleTokens = getSignificantTitleTokens(cleanTitle);
+            if (titleTokens.length < 8) return false;
+
+            const sourceTokens = new Set(getSignificantTitleTokens(source));
+            const overlap = titleTokens.filter(token => sourceTokens.has(token)).length / titleTokens.length;
+            const hasRoster = /\b(diretor|diretora|gerente|supervisor|supervisora|instrutor|instrutora|coordenador|coordenadora|juntamente)\b/i.test(cleanTitle);
+            const hasManyClauses = (cleanTitle.match(/,/g) || []).length >= 2;
+
+            return overlap >= 0.72 && (cleanTitle.length > 110 || hasRoster || hasManyClauses);
+        }
+
         function titleHasJournalisticVerb(text) {
             return /\b(realiza|realizou|realizam|realizaram|promove|promoveu|promovem|promoveram|participa|participou|participam|participaram|recebe|recebeu|recebem|receberam|inicia|iniciou|iniciam|iniciaram|celebra|celebrou|celebram|celebraram|encerra|encerrou|encerram|encerraram|acompanha|acompanhou|acompanham|acompanharam|fortalece|fortaleceu|fortalecem|fortaleceram|apresenta|apresentou|apresentam|apresentaram|desenvolve|desenvolveu|desenvolvem|desenvolveram|entrega|entregou|entregam|entregaram|capacita|capacitou|capacitam|capacitaram|forma|formou|formam|formaram|sedia|sediou|sediam|sediaram|reúne|reuniu|reúnem|reuniram|amplia|ampliou|ampliam|ampliaram|leva|levou|levam|levaram|orienta|orientou|orientam|orientaram|evidencia|evidenciou|evidenciam|evidenciaram|ressalta|ressaltou|ressaltam|ressaltaram|valoriza|valorizou|valorizam|valorizaram|registra|registrou|registram|registraram|marca|marcou|marcam|marcaram|acontece|aconteceu|acontecem|aconteceram|destaca|destacou|destacam|destacaram)\b/i.test(text);
         }
@@ -818,6 +980,7 @@
             let title = stripIntroductoryDate(text || sourceText);
             const unitLabel = formatUnitForHeadline(unit);
             const unitKey = normalizeForComparison(unit);
+            const source = normalizeEditorialWhitespace(sourceText, false);
 
             title = title.replace(/^[•\-–—\d.)\s]+/, '').replace(/[,:;]\s*$/, '').trim();
             title = title.replace(/^Foi dado início\s+(?:ao|à|a|aos|às)?\s*/i, 'A unidade iniciou ');
@@ -834,38 +997,23 @@
                 title = simplifyWeakHeadlineOpening(title);
             }
 
+            if (titleLooksCopiedFromSource(title, source)) {
+                title = synthesizeJournalisticTitle(source || title, unit) || title;
+            }
+
             if (!titleHasJournalisticVerb(title)) {
                 const prefixVerb = selectHeadlinePrefixVerb(title, unitLabel, sourceText);
-                title = `${unitLabel || 'A pauta'} ${prefixVerb} ${lowerFirstLetter(title)}`;
+                title = `${unitLabel || 'A pauta'} ${conjugateHeadlineVerb(prefixVerb, unitLabel)} ${lowerFirstLetter(title)}`;
             }
 
             title = title.charAt(0).toUpperCase() + title.slice(1);
-            return semanticTrim(ensureFinalPunctuationWithinLimit(title, EDITORIAL_LIMITS.title), EDITORIAL_LIMITS.title, true);
+            const maxLength = Math.min(EDITORIAL_LIMITS.title, JOURNALISTIC_TITLE_MAX);
+            return semanticTrim(ensureFinalPunctuationWithinLimit(title, maxLength), maxLength, true);
         }
 
         function generateTitle(sourceText, unit = '') {
-            const sentences = splitIntoSentences(sourceText);
-            let title = stripIntroductoryDate(sentences[0] || sourceText);
-            const contextBreakers = [
-                /\s*,?\s+com o objetivo\b/i,
-                /\s*,?\s+visando\b/i,
-                /\s*,?\s+com o intuito\b/i,
-                /\s*,?\s+com a finalidade\b/i,
-                /\s*,?\s+para promover\b/i,
-                /\s*,?\s+que teve\b/i,
-                /\s*,?\s+realizada em\b/i,
-                /\s*,?\s+realizado em\b/i
-            ];
-
-            for (const breaker of contextBreakers) {
-                const parts = title.split(breaker);
-                if (parts[0] && parts[0].trim().length >= 25) {
-                    title = parts[0].trim();
-                    break;
-                }
-            }
-
-            return formatJournalisticTitle(title, unit, sourceText);
+            const syntheticTitle = synthesizeJournalisticTitle(sourceText, unit);
+            return formatJournalisticTitle(syntheticTitle || sourceText, unit, sourceText);
         }
 
         function extractObjectiveSentence(sourceText) {
@@ -923,7 +1071,8 @@
         function normalizeReportForStorage(report) {
             const normalized = { ...report };
             normalized.unit = normalizeEditorialWhitespace(normalized.unit, false);
-            normalized.title = formatJournalisticTitle(normalized.title, normalized.unit, normalized.lead || normalized.content);
+            const titleSource = `${normalized.lead || ''} ${normalized.content || ''}`.trim();
+            normalized.title = formatJournalisticTitle(normalized.title, normalized.unit, titleSource);
             normalized.lead = semanticTrim(normalized.lead, EDITORIAL_LIMITS.lead, true);
             normalized.content = semanticTrim(normalized.content, EDITORIAL_LIMITS.content, true);
             return normalized;
