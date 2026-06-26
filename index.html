@@ -390,15 +390,15 @@
                 </div>
                 <div>
                     <label for="edit-single-title" class="flex justify-between text-[10px] font-bold text-brand-gray uppercase mb-1"><span>Manchete Executiva (Título Curto)</span> <span id="count-title" class="text-brand-red" aria-live="polite"></span></label>
-                    <input type="text" id="edit-single-title" maxlength="200" oninput="document.getElementById('count-title').innerText = this.value.length + '/200';" class="touch-input w-full border border-gray-300 rounded p-2 focus:outline-none focus:ring-2 focus:ring-brand-blue font-bold text-lg text-brand-dark">
+                    <input type="text" id="edit-single-title" maxlength="200" oninput="enforceEditorialLimit(this, 'title', 'count-title')" class="touch-input w-full border border-gray-300 rounded p-2 focus:outline-none focus:ring-2 focus:ring-brand-blue font-bold text-lg text-brand-dark">
                 </div>
                 <div>
                     <label for="edit-single-lead" class="flex justify-between text-[10px] font-bold text-brand-gray uppercase mb-1"><span>Síntese Estratégica (Lead)</span> <span id="count-lead" class="text-brand-red" aria-live="polite"></span></label>
-                    <textarea id="edit-single-lead" rows="2" maxlength="500" oninput="document.getElementById('count-lead').innerText = this.value.length + '/500';" class="touch-input w-full border border-red-200 rounded p-3 focus:outline-none focus:ring-2 focus:ring-brand-blue text-sm text-brand-dark font-semibold leading-relaxed bg-red-50"></textarea>
+                    <textarea id="edit-single-lead" rows="2" maxlength="500" oninput="enforceEditorialLimit(this, 'lead', 'count-lead')" class="touch-input w-full border border-red-200 rounded p-3 focus:outline-none focus:ring-2 focus:ring-brand-blue text-sm text-brand-dark font-semibold leading-relaxed bg-red-50"></textarea>
                 </div>
                 <div>
                     <label for="edit-single-content" class="flex justify-between text-[10px] font-bold text-brand-gray uppercase mb-1"><span>Corpo Institucional (Detalhes)</span> <span id="count-content" class="text-brand-red" aria-live="polite"></span></label>
-                    <textarea id="edit-single-content" rows="6" maxlength="1500" oninput="document.getElementById('count-content').innerText = this.value.length + '/1500';" class="touch-input w-full border border-gray-300 rounded p-3 focus:outline-none text-gray-800 leading-relaxed resize-none"></textarea>
+                    <textarea id="edit-single-content" rows="6" maxlength="1500" oninput="enforceEditorialLimit(this, 'content', 'count-content')" class="touch-input w-full border border-gray-300 rounded p-3 focus:outline-none text-gray-800 leading-relaxed resize-none"></textarea>
                 </div>
             </div>
             <div class="modal-footer p-4 border-t border-gray-200 bg-gray-50 flex justify-end gap-3 mobile-stack">
@@ -438,6 +438,11 @@
         var reports = [];
         var parsedReportsCache = []; 
         var currentFilterSubtitle = '';
+        const EDITORIAL_LIMITS = Object.freeze({
+            title: 200,
+            lead: 500,
+            content: 1500
+        });
 
         function escapeHtml(value) {
             return String(value ?? '').replace(/[&<>"']/g, (char) => ({
@@ -468,6 +473,7 @@
             } catch (e) {
                 reports = [];
             }
+            reports = Array.isArray(reports) ? reports.map(normalizeReportForStorage) : [];
             setTimeout(() => { applyFilters(); }, 100);
         }
 
@@ -610,22 +616,62 @@
             });
         }
 
+        function normalizeEditorialWhitespace(text, preserveParagraphs = false) {
+            let value = String(text ?? '').replace(/\r/g, '\n').replace(/\u00A0/g, ' ');
+            if (preserveParagraphs) {
+                return value
+                    .replace(/[ \t\f\v]+/g, ' ')
+                    .replace(/[ \t]*\n[ \t]*/g, '\n')
+                    .replace(/\n{3,}/g, '\n\n')
+                    .trim();
+            }
+            return value.replace(/\s+/g, ' ').trim();
+        }
+
+        function ensureFinalPunctuationWithinLimit(text, maxLength) {
+            let value = normalizeEditorialWhitespace(text, true).replace(/[\s,;:/\-–—]+$/, '');
+            if (!value) return '';
+            if (/[.!?]$/.test(value)) return value.length <= maxLength ? value : value.substring(0, maxLength);
+            if (value.length >= maxLength) {
+                value = value.substring(0, Math.max(0, maxLength - 1)).replace(/[\s,;:/\-–—]+$/, '');
+            }
+            return value ? `${value}.` : '';
+        }
+
         function semanticTrim(text, maxLength, isBody = false) {
-            if (!text || text.length <= maxLength) return text;
-            
-            let trimmed = text.substring(0, maxLength);
-            let lastSpace = trimmed.lastIndexOf(' ');
-            
-            if (lastSpace > 0) {
-                trimmed = trimmed.substring(0, lastSpace);
+            if (!maxLength || maxLength < 1) return '';
+            let value = normalizeEditorialWhitespace(text, isBody);
+            if (!value) return '';
+
+            if (value.length > maxLength) {
+                const reservedForPunctuation = isBody ? 1 : 0;
+                const cutLimit = Math.max(1, maxLength - reservedForPunctuation);
+                let candidate = value.substring(0, cutLimit + 1);
+
+                if (isBody) {
+                    const lastSentence = Math.max(candidate.lastIndexOf('.'), candidate.lastIndexOf('!'), candidate.lastIndexOf('?'));
+                    const minimumUsefulSentence = Math.min(80, Math.floor(cutLimit * 0.45));
+                    if (lastSentence >= minimumUsefulSentence) {
+                        candidate = candidate.substring(0, lastSentence + 1);
+                    } else {
+                        candidate = candidate.substring(0, cutLimit);
+                    }
+                } else {
+                    candidate = candidate.substring(0, cutLimit);
+                }
+
+                const lastBreak = Math.max(candidate.lastIndexOf(' '), candidate.lastIndexOf('\n'));
+                if (lastBreak > Math.min(35, Math.floor(cutLimit * 0.65)) && candidate.length >= cutLimit) {
+                    candidate = candidate.substring(0, lastBreak);
+                }
+
+                value = candidate.replace(/[\s,;:/\-–—]+$/, '');
             }
-            
-            trimmed = trimmed.replace(/[\s,;:/\-]+$/, '');
-            
-            if (isBody && !trimmed.endsWith('.')) {
-                trimmed += '.';
+
+            if (isBody) {
+                return ensureFinalPunctuationWithinLimit(value, maxLength);
             }
-            return trimmed;
+            return value.length <= maxLength ? value : value.substring(0, maxLength).replace(/[\s,;:/\-–—]+$/, '');
         }
 
         function cleanAndImproveText(text) {
@@ -655,42 +701,194 @@
                 clean = clean.replace(pattern, replacement);
             });
 
-            clean = clean.replace(/\s{2,}/g, ' ');
+            clean = clean.replace(/[ \t\f\v]{2,}/g, ' ');
+            clean = clean.replace(/[ \t]*\n[ \t]*/g, '\n');
+            clean = clean.replace(/\n{3,}/g, '\n\n');
             clean = clean.trim();
             if(clean.length > 0) clean = clean.charAt(0).toUpperCase() + clean.slice(1);
             return clean;
         }
 
-        function generateTitle(firstSentence) {
-            let title = firstSentence;
-            title = title.replace(/^(A unidade realizou|A unidade promoveu|Representantes da unidade participaram de|Representantes da unidade participaram da|A instituição promoveu|Foi dado início ao|Foi dado início à|As atividades foram iniciadas com|A unidade celebrou a|A unidade celebrou o|A unidade recebeu|A comitiva institucional foi recebida|A equipe acompanhou a|A equipe acompanhou o|A unidade encerrou a|O Departamento Nacional do SESI realizou|A Coordenação Regional de Educação.*?sediou uma)\s*(o|a|os|as|um|uma)?\s*/i, '');
-            let coreParts = title.split(/(?:\s+com o objetivo|\s+durante|\s+visando|\s+que teve|\s+realizada em|\s+realizado em|\s+com a finalidade|\s+para promover)/i);
-            title = coreParts[0].trim();
-            title = title.replace(/[,:;.]\s*$/, '');
-            if(title.length > 0) title = title.charAt(0).toUpperCase() + title.slice(1);
-            return semanticTrim(title, 200, false);
+        function splitIntoSentences(text) {
+            const normalized = normalizeEditorialWhitespace(text, false);
+            if (!normalized) return [];
+            return normalized.match(/[^.!?]+[.!?]+|[^.!?]+$/g)?.map(sentence => sentence.trim()).filter(Boolean) || [];
         }
 
-        function generateExecutiveSummary(firstSentence) {
+        function stripIntroductoryDate(text) {
+            return normalizeEditorialWhitespace(text, false)
+                .replace(/^(?:No dia|Nos dias|Entre os dias|De)\s+\d{1,2}(?:\s*(?:a|e|até)\s*\d{1,2})?\s+de\s+[a-zA-ZçÇ]+(?:\s+de\s+\d{4})?\s*(?:[-–,.:])?\s*/i, '')
+                .replace(/^\d{1,2}(?:\s*e\s*\d{1,2})?\s+de\s+[a-zA-ZçÇ]+(?:\s+de\s+\d{4})?\s*(?:[-–,.:])?\s*/i, '')
+                .trim();
+        }
+
+        function formatUnitForHeadline(unit) {
+            const normalized = normalizeEditorialWhitespace(unit, false).replace(/\*/g, '');
+            if (!normalized || normalized.length > 48) return '';
+            return normalized
+                .toLowerCase()
+                .replace(/\b(sesi|senai|fatec|fieg)\b/g, token => token.toUpperCase())
+                .replace(/(^|[\s/-])([a-záéíóúâêôãõç])/g, (_, prefix, letter) => `${prefix}${letter.toUpperCase()}`);
+        }
+
+        function normalizeForComparison(text) {
+            return normalizeEditorialWhitespace(text, false)
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .toLowerCase()
+                .replace(/[^a-z0-9]+/g, ' ')
+                .trim();
+        }
+
+        function lowerFirstLetter(text) {
+            const value = normalizeEditorialWhitespace(text, false);
+            return value ? value.charAt(0).toLowerCase() + value.slice(1) : '';
+        }
+
+        function titleHasJournalisticVerb(text) {
+            return /\b(realiza|realizou|promove|promoveu|participa|participou|participaram|recebe|recebeu|inicia|iniciou|celebra|celebrou|encerra|encerrou|acompanha|acompanhou|fortalece|fortaleceu|apresenta|apresentou|desenvolve|desenvolveu|entrega|entregou|capacita|capacitou|forma|formou|sedia|sediou|reúne|reuniu|amplia|ampliou|leva|levou|orienta|orientou|destaca)\b/i.test(text);
+        }
+
+        function formatJournalisticTitle(text, unit = '', sourceText = '') {
+            let title = stripIntroductoryDate(text || sourceText);
+            const unitLabel = formatUnitForHeadline(unit);
+            const unitKey = normalizeForComparison(unit);
+
+            title = title.replace(/^[•\-–—\d.)\s]+/, '').replace(/[,:;]\s*$/, '').trim();
+            title = title.replace(/^Foi dado início\s+(?:ao|à|a|aos|às)?\s*/i, 'A unidade iniciou ');
+            title = title.replace(/^As atividades foram iniciadas com\s*/i, 'A unidade iniciou ');
+            title = title.replace(/^Representantes da unidade participaram(?:\s+(?:de|da|do|dos|das|em))?\s*/i, 'A unidade participou de ');
+            title = title.replace(/^A comitiva institucional foi recebida(?:\s+(?:por|pela|pelo|em))?\s*/i, 'A comitiva institucional participou de ');
+            title = title.replace(/^(A unidade|A instituição)\b/i, unitLabel || 'A unidade');
+
+            if (!title || normalizeForComparison(title) === unitKey) {
+                title = sourceText || `A pauta da ${unitLabel || 'unidade'} apresenta novo destaque institucional.`;
+            }
+
+            if (!titleHasJournalisticVerb(title)) {
+                title = `${unitLabel || 'A pauta'} destaca ${lowerFirstLetter(title)}`;
+            }
+
+            title = title.charAt(0).toUpperCase() + title.slice(1);
+            return semanticTrim(ensureFinalPunctuationWithinLimit(title, EDITORIAL_LIMITS.title), EDITORIAL_LIMITS.title, true);
+        }
+
+        function generateTitle(sourceText, unit = '') {
+            const sentences = splitIntoSentences(sourceText);
+            let title = stripIntroductoryDate(sentences[0] || sourceText);
+            const contextBreakers = [
+                /\s*,?\s+com o objetivo\b/i,
+                /\s*,?\s+visando\b/i,
+                /\s*,?\s+com o intuito\b/i,
+                /\s*,?\s+com a finalidade\b/i,
+                /\s*,?\s+para promover\b/i,
+                /\s*,?\s+que teve\b/i,
+                /\s*,?\s+realizada em\b/i,
+                /\s*,?\s+realizado em\b/i
+            ];
+
+            for (const breaker of contextBreakers) {
+                const parts = title.split(breaker);
+                if (parts[0] && parts[0].trim().length >= 25) {
+                    title = parts[0].trim();
+                    break;
+                }
+            }
+
+            return formatJournalisticTitle(title, unit, sourceText);
+        }
+
+        function extractObjectiveSentence(sourceText) {
             let splitters = ['com o objetivo de', 'visando a', 'visando o', 'visando', 'com o intuito de', 'para promover', 'com a finalidade de'];
             let objective = '';
             for (let s of splitters) {
-                let regex = new RegExp(`\\s+${s}\\s+`, 'i');
-                if (regex.test(firstSentence)) {
-                    let parts = firstSentence.split(regex);
+                const regex = new RegExp(`\\s+${s}\\s+`, 'i');
+                if (regex.test(sourceText)) {
+                    const parts = sourceText.split(regex);
                     objective = parts[1].trim().replace(/[,:;.]\s*$/, '');
                     break;
                 }
             }
-            
-            let lead = '';
+            return objective;
+        }
+
+        function generateExecutiveSummary(sourceText, title = '') {
+            const sentences = splitIntoSentences(sourceText);
+            const firstSentence = stripIntroductoryDate(sentences[0] || sourceText);
+            const secondSentence = sentences[1] ? stripIntroductoryDate(sentences[1]) : '';
+            const objective = extractObjectiveSentence(sourceText);
+            let lead = firstSentence;
+
             if (objective) {
-                objective = objective.charAt(0).toLowerCase() + objective.slice(1);
-                lead = `Ação estratégica desenvolvida para ${objective}.`;
-            } else {
-                lead = `Destaque institucional: ${firstSentence.split('.')[0].trim()}.`;
+                const titleBase = normalizeEditorialWhitespace(title, false).replace(/[.!?]$/, '');
+                lead = `${titleBase || firstSentence} e busca ${lowerFirstLetter(objective)}.`;
+            } else if (secondSentence && `${firstSentence} ${secondSentence}`.length <= EDITORIAL_LIMITS.lead) {
+                lead = `${firstSentence} ${secondSentence}`;
             }
-            return semanticTrim(lead, 500, true);
+
+            return semanticTrim(lead, EDITORIAL_LIMITS.lead, true);
+        }
+
+        function applyEditorialFieldsToReport(report, rawContent) {
+            const cleanContent = cleanAndImproveText(rawContent);
+            const paragraphs = cleanContent.split(/\n+/).map(p => p.trim()).filter(Boolean);
+            if (paragraphs.length > 0) {
+                const firstPar = paragraphs[0];
+                const firstParagraphSentences = splitIntoSentences(firstPar);
+                const title = generateTitle(firstPar, report.unit);
+                report.title = title;
+                report.lead = generateExecutiveSummary(firstPar, title);
+
+                const bodyArr = [];
+                const restOfFirstParagraph = firstParagraphSentences.slice(1).join(' ');
+                if (restOfFirstParagraph) bodyArr.push(restOfFirstParagraph);
+                for (let j = 1; j < paragraphs.length; j++) bodyArr.push(paragraphs[j]);
+                report.content = semanticTrim(bodyArr.join('\n\n'), EDITORIAL_LIMITS.content, true);
+            }
+            if (!report.type) report.type = inferCategory(rawContent);
+            if (!report.date) report.date = new Date().toISOString().split('T')[0];
+            return normalizeReportForStorage(report);
+        }
+
+        function normalizeReportForStorage(report) {
+            const normalized = { ...report };
+            normalized.unit = normalizeEditorialWhitespace(normalized.unit, false);
+            normalized.title = formatJournalisticTitle(normalized.title, normalized.unit, normalized.lead || normalized.content);
+            normalized.lead = semanticTrim(normalized.lead, EDITORIAL_LIMITS.lead, true);
+            normalized.content = semanticTrim(normalized.content, EDITORIAL_LIMITS.content, true);
+            return normalized;
+        }
+
+        function ensureDistinctTitles(reportList) {
+            const seen = new Set();
+            reportList.forEach((item) => {
+                item.title = formatJournalisticTitle(item.title, item.unit, `${item.lead || ''} ${item.content || ''}`);
+                let key = normalizeForComparison(item.title);
+                if (seen.has(key)) {
+                    const alternativeSource = splitIntoSentences(`${item.lead || ''} ${item.content || ''}`)
+                        .find(sentence => normalizeForComparison(sentence) !== key);
+                    if (alternativeSource) {
+                        item.title = generateTitle(alternativeSource, item.unit);
+                        key = normalizeForComparison(item.title);
+                    }
+                }
+                if (seen.has(key)) {
+                    const dateContext = item.date ? ` em ${formatReportDate(item.date)}` : '';
+                    item.title = semanticTrim(`${item.title.replace(/[.!?]$/, '')}${dateContext}.`, EDITORIAL_LIMITS.title, true);
+                    key = normalizeForComparison(item.title);
+                }
+                seen.add(key);
+            });
+        }
+
+        function enforceEditorialLimit(field, limitKey, counterId) {
+            const limit = EDITORIAL_LIMITS[limitKey];
+            if (!field || !limit) return;
+            if (field.value.length > limit) {
+                field.value = field.value.substring(0, limit);
+            }
+            const counter = document.getElementById(counterId);
+            if (counter) counter.innerText = `${field.value.length}/${limit}`;
         }
 
         function extractDate(text) {
@@ -757,23 +955,7 @@
                     
                     if (isUnitHeader && node.tagName !== 'IMG' && !node.querySelector('img')) {
                         if (currentAction && rawAccumulatedContent.length > 10) {
-                            let cleanContent = cleanAndImproveText(rawAccumulatedContent);
-                            let paragraphs = cleanContent.split(/\n+/).filter(p => p.trim().length > 0);
-                            if (paragraphs.length > 0) {
-                                let firstPar = paragraphs[0];
-                                let restOfPar = paragraphs[0].split('. ').slice(1).join('. ');
-                                currentAction.title = generateTitle(firstPar);
-                                currentAction.lead = generateExecutiveSummary(firstPar);
-                                let bodyArr = [];
-                                if(restOfPar) bodyArr.push(restOfPar + (restOfPar.endsWith('.') ? '' : '.'));
-                                for (let j = 1; j < paragraphs.length; j++) bodyArr.push(paragraphs[j]);
-                                
-                                let fullBody = bodyArr.join('\n\n');
-                                currentAction.content = semanticTrim(fullBody, 1500, true);
-                            }
-                            if(!currentAction.type) currentAction.type = inferCategory(rawAccumulatedContent);
-                            if(!currentAction.date) currentAction.date = new Date().toISOString().split('T')[0];
-                            parsedReportsCache.push(currentAction);
+                            parsedReportsCache.push(applyEditorialFieldsToReport(currentAction, rawAccumulatedContent));
                         }
                         currentAction = { id: 'rep_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5), unit: rawText.replace(/\*/g, '').trim(), title: '', lead: '', date: '', type: '', content: '', image: null, rawImage: null };
                         rawAccumulatedContent = ""; 
@@ -787,26 +969,11 @@
                     }
                 }
                 if (currentAction && rawAccumulatedContent.length > 10) {
-                    let cleanContent = cleanAndImproveText(rawAccumulatedContent);
-                    let paragraphs = cleanContent.split(/\n+/).filter(p => p.trim().length > 0);
-                    if (paragraphs.length > 0) {
-                        let firstPar = paragraphs[0];
-                        let restOfPar = paragraphs[0].split('. ').slice(1).join('. ');
-                        currentAction.title = generateTitle(firstPar);
-                        currentAction.lead = generateExecutiveSummary(firstPar);
-                        let bodyArr = [];
-                        if(restOfPar) bodyArr.push(restOfPar + (restOfPar.endsWith('.') ? '' : '.'));
-                        for (let j = 1; j < paragraphs.length; j++) bodyArr.push(paragraphs[j]);
-                        
-                        let fullBody = bodyArr.join('\n\n');
-                        currentAction.content = semanticTrim(fullBody, 1500, true);
-                    }
-                    if(!currentAction.type) currentAction.type = inferCategory(rawAccumulatedContent);
-                    if(!currentAction.date) currentAction.date = new Date().toISOString().split('T')[0];
-                    parsedReportsCache.push(currentAction);
+                    parsedReportsCache.push(applyEditorialFieldsToReport(currentAction, rawAccumulatedContent));
                 }
             }
 
+            ensureDistinctTitles(parsedReportsCache);
             document.getElementById('upload-feedback').innerText = "Aplicando enquadramentos matemáticos...";
             const imagePromises = parsedReportsCache.map(async (item) => {
                 if (item.rawImage) {
@@ -853,9 +1020,9 @@
                         <div><label for="edit-unit-${item.id}" class="text-[10px] font-bold text-brand-gray uppercase">Unidade</label><input type="text" value="${safeUnit}" id="edit-unit-${item.id}" class="touch-input w-full font-bold text-sm text-brand-blue border-b border-gray-300 focus:outline-none focus:ring-2 focus:ring-brand-blue bg-transparent uppercase"></div>
                         <div><label for="edit-date-${item.id}" class="text-[10px] font-bold text-brand-gray uppercase">Data</label><input type="date" value="${safeDate}" id="edit-date-${item.id}" class="touch-input w-full text-xs border border-gray-300 rounded p-2 focus:outline-none focus:ring-2 focus:ring-brand-blue font-bold text-brand-dark"></div>
                     </div>
-                    <div class="mb-2"><label for="edit-title-${item.id}" class="flex justify-between text-[10px] font-bold text-brand-gray uppercase"><span>Manchete</span> <span aria-live="polite">${item.title.length}/200</span></label><textarea id="edit-title-${item.id}" maxlength="200" rows="2" class="touch-input w-full text-sm font-bold border border-gray-300 rounded p-2 focus:outline-none focus:ring-2 focus:ring-brand-blue bg-gray-50 resize-none text-brand-dark" style="font-family: 'Montserrat', sans-serif;">${safeTitle}</textarea></div>
-                    <div class="mb-2"><label for="edit-lead-${item.id}" class="flex justify-between text-[10px] font-bold text-brand-gray uppercase"><span>Síntese (Lead)</span> <span aria-live="polite">${item.lead.length}/500</span></label><textarea id="edit-lead-${item.id}" maxlength="500" rows="3" class="touch-input w-full text-xs font-semibold text-brand-dark border border-red-200 rounded p-2 focus:outline-none focus:ring-2 focus:ring-brand-blue bg-red-50 resize-none" style="font-family: 'Montserrat', sans-serif;">${safeLead}</textarea></div>
-                    <div class="mb-2"><label for="edit-content-${item.id}" class="flex justify-between text-[10px] font-bold text-brand-gray uppercase"><span>Detalhes Institucionais</span> <span aria-live="polite">${item.content.length}/1500</span></label><textarea id="edit-content-${item.id}" maxlength="1500" rows="3" class="touch-input w-full text-xs border border-gray-300 rounded p-2 focus:outline-none focus:ring-2 focus:ring-brand-blue text-gray-700 leading-relaxed resize-none" style="font-family: 'Montserrat', sans-serif;">${safeContent}</textarea></div>
+                    <div class="mb-2"><label for="edit-title-${item.id}" class="flex justify-between text-[10px] font-bold text-brand-gray uppercase"><span>Manchete</span> <span id="count-title-${item.id}" aria-live="polite">${item.title.length}/${EDITORIAL_LIMITS.title}</span></label><textarea id="edit-title-${item.id}" maxlength="${EDITORIAL_LIMITS.title}" oninput="enforceEditorialLimit(this, 'title', 'count-title-${item.id}')" rows="2" class="touch-input w-full text-sm font-bold border border-gray-300 rounded p-2 focus:outline-none focus:ring-2 focus:ring-brand-blue bg-gray-50 resize-none text-brand-dark" style="font-family: 'Montserrat', sans-serif;">${safeTitle}</textarea></div>
+                    <div class="mb-2"><label for="edit-lead-${item.id}" class="flex justify-between text-[10px] font-bold text-brand-gray uppercase"><span>Síntese (Lead)</span> <span id="count-lead-${item.id}" aria-live="polite">${item.lead.length}/${EDITORIAL_LIMITS.lead}</span></label><textarea id="edit-lead-${item.id}" maxlength="${EDITORIAL_LIMITS.lead}" oninput="enforceEditorialLimit(this, 'lead', 'count-lead-${item.id}')" rows="3" class="touch-input w-full text-xs font-semibold text-brand-dark border border-red-200 rounded p-2 focus:outline-none focus:ring-2 focus:ring-brand-blue bg-red-50 resize-none" style="font-family: 'Montserrat', sans-serif;">${safeLead}</textarea></div>
+                    <div class="mb-2"><label for="edit-content-${item.id}" class="flex justify-between text-[10px] font-bold text-brand-gray uppercase"><span>Detalhes Institucionais</span> <span id="count-content-${item.id}" aria-live="polite">${item.content.length}/${EDITORIAL_LIMITS.content}</span></label><textarea id="edit-content-${item.id}" maxlength="${EDITORIAL_LIMITS.content}" oninput="enforceEditorialLimit(this, 'content', 'count-content-${item.id}')" rows="3" class="touch-input w-full text-xs border border-gray-300 rounded p-2 focus:outline-none focus:ring-2 focus:ring-brand-blue text-gray-700 leading-relaxed resize-none" style="font-family: 'Montserrat', sans-serif;">${safeContent}</textarea></div>
                     <div><label for="edit-type-${item.id}" class="text-[10px] font-bold text-brand-gray uppercase">Eixo</label><select id="edit-type-${item.id}" class="touch-input w-full text-xs border border-gray-300 rounded p-2 focus:outline-none focus:ring-2 focus:ring-brand-blue bg-brand-info-light text-brand-blue font-semibold"><option value="Educação e Qualificação" ${safeType === 'Educação e Qualificação' ? 'selected' : ''}>Educação e Qualificação</option><option value="Saúde e Segurança" ${safeType === 'Saúde e Segurança' ? 'selected' : ''}>Saúde e Segurança</option><option value="Indústria 4.0 e Inovação" ${safeType === 'Indústria 4.0 e Inovação' ? 'selected' : ''}>Indústria 4.0 e Inovação</option><option value="Relações Institucionais" ${safeType === 'Relações Institucionais' ? 'selected' : ''}>Relações Institucionais</option></select></div>
                 `;
                 container.appendChild(card);
@@ -878,15 +1045,17 @@
             // Aplica edições feitas na tela
             parsedReportsCache.forEach((item) => {
                 item.unit = document.getElementById(`edit-unit-${item.id}`).value; 
-                item.title = semanticTrim(document.getElementById(`edit-title-${item.id}`).value, 200, false); 
-                item.lead = semanticTrim(document.getElementById(`edit-lead-${item.id}`).value, 500, true); 
+                item.title = document.getElementById(`edit-title-${item.id}`).value;
+                item.lead = document.getElementById(`edit-lead-${item.id}`).value;
                 item.date = document.getElementById(`edit-date-${item.id}`).value; 
                 item.type = document.getElementById(`edit-type-${item.id}`).value; 
-                item.content = semanticTrim(document.getElementById(`edit-content-${item.id}`).value, 1500, true);
+                item.content = document.getElementById(`edit-content-${item.id}`).value;
+                Object.assign(item, normalizeReportForStorage(item));
                 
                 // OTIMIZAÇÃO CRÍTICA DE MEMÓRIA (Destrói imagem original antes de gravar)
                 delete item.originalImage; 
             });
+            ensureDistinctTitles(parsedReportsCache);
             
             try { 
                 let newReportsData = [...reports, ...parsedReportsCache]; 
@@ -917,13 +1086,13 @@
             document.getElementById('edit-single-date').value = report.date; 
             
             document.getElementById('edit-single-title').value = report.title; 
-            document.getElementById('count-title').innerText = report.title.length + '/200';
+            document.getElementById('count-title').innerText = report.title.length + `/${EDITORIAL_LIMITS.title}`;
             
             document.getElementById('edit-single-lead').value = report.lead || ''; 
-            document.getElementById('count-lead').innerText = (report.lead ? report.lead.length : 0) + '/500';
+            document.getElementById('count-lead').innerText = (report.lead ? report.lead.length : 0) + `/${EDITORIAL_LIMITS.lead}`;
             
             document.getElementById('edit-single-content').value = report.content || '';
-            document.getElementById('count-content').innerText = (report.content ? report.content.length : 0) + '/1500';
+            document.getElementById('count-content').innerText = (report.content ? report.content.length : 0) + `/${EDITORIAL_LIMITS.content}`;
             
             document.getElementById('edit-single-modal').classList.remove('hidden');
         }
@@ -935,9 +1104,10 @@
             reports[index].type = document.getElementById('edit-single-type').value; 
             reports[index].date = document.getElementById('edit-single-date').value; 
             
-            reports[index].title = semanticTrim(document.getElementById('edit-single-title').value, 200, false); 
-            reports[index].lead = semanticTrim(document.getElementById('edit-single-lead').value, 500, true); 
-            reports[index].content = semanticTrim(document.getElementById('edit-single-content').value, 1500, true);
+            reports[index].title = document.getElementById('edit-single-title').value;
+            reports[index].lead = document.getElementById('edit-single-lead').value;
+            reports[index].content = document.getElementById('edit-single-content').value;
+            reports[index] = normalizeReportForStorage(reports[index]);
             
             try {
                 // Guarda de forma assíncrona no IndexedDB
@@ -993,7 +1163,8 @@
             if(data.length === 0) { feed.innerHTML = '<p class="text-brand-gray text-center p-12 bg-white rounded-xl font-medium italic text-lg shadow-sm border border-gray-100">A mesa de redação não encontrou pautas para o filtro selecionado.</p>'; return; }
             const sortedData = [...data].sort((a, b) => new Date(b.date) - new Date(a.date));
             
-            sortedData.forEach(item => {
+            sortedData.forEach(rawItem => {
+                const item = normalizeReportForStorage(rawItem);
                 let formattedDate = formatReportDate(item.date);
                 const safeUnit = escapeHtml(item.unit);
                 const safeTitle = escapeHtml(item.title);
@@ -1101,7 +1272,8 @@
             const reportsById = new Map(reports.map(report => [report.id, report]));
             return cards
                 .map(card => reportsById.get(card.id.replace(/^card-/, '')))
-                .filter(Boolean);
+                .filter(Boolean)
+                .map(normalizeReportForStorage);
         }
 
         function drawPdfChrome(pdf, logo) {
@@ -1158,7 +1330,7 @@
                     pdf.addPage();
                 }
                 let y = page.top;
-                const title = normalizePdfText(report.title || 'Matéria sem título');
+                const title = normalizePdfText(semanticTrim(report.title || 'Matéria sem título', EDITORIAL_LIMITS.title, true));
                 const unit = normalizePdfText(report.unit || 'Unidade não informada').toUpperCase();
                 const date = formatReportDate(report.date);
                 const type = normalizePdfText(report.type || 'Eixo não informado');
@@ -1219,7 +1391,7 @@
                     y += imageHeight + 10;
                 }
 
-                const lead = normalizePdfText(report.lead);
+                const lead = normalizePdfText(semanticTrim(report.lead, EDITORIAL_LIMITS.lead, true));
                 if (lead) {
                     pdf.setFont('helvetica', 'bold');
                     pdf.setFontSize(11);
@@ -1234,7 +1406,7 @@
                     y += boxHeight + 8;
                 }
 
-                const paragraphs = String(report.content || '')
+                const paragraphs = String(semanticTrim(report.content || '', EDITORIAL_LIMITS.content, true))
                     .split(/\n+/)
                     .map(normalizePdfText)
                     .filter(Boolean);
