@@ -116,6 +116,19 @@
         
         #pdf-loading { backdrop-filter: blur(5px); }
 
+        .editorial-text {
+            text-align: justify;
+            text-align-last: left;
+            text-justify: inter-word;
+            hyphens: auto;
+            overflow-wrap: break-word;
+        }
+
+        .editorial-textarea {
+            text-align: justify;
+            text-justify: inter-word;
+        }
+
         /* Estilo do modal de Crop */
         .cropper-view-box, .cropper-face { border-radius: 0; }
 
@@ -394,11 +407,11 @@
                 </div>
                 <div>
                     <label for="edit-single-lead" class="flex justify-between text-[10px] font-bold text-brand-gray uppercase mb-1"><span>Síntese Estratégica (Lead)</span> <span id="count-lead" class="text-brand-red" aria-live="polite"></span></label>
-                    <textarea id="edit-single-lead" rows="2" maxlength="500" oninput="enforceEditorialLimit(this, 'lead', 'count-lead')" class="touch-input w-full border border-red-200 rounded p-3 focus:outline-none focus:ring-2 focus:ring-brand-blue text-sm text-brand-dark font-semibold leading-relaxed bg-red-50"></textarea>
+                    <textarea id="edit-single-lead" rows="2" maxlength="500" oninput="enforceEditorialLimit(this, 'lead', 'count-lead')" class="editorial-textarea touch-input w-full border border-red-200 rounded p-3 focus:outline-none focus:ring-2 focus:ring-brand-blue text-sm text-brand-dark font-semibold leading-relaxed bg-red-50"></textarea>
                 </div>
                 <div>
                     <label for="edit-single-content" class="flex justify-between text-[10px] font-bold text-brand-gray uppercase mb-1"><span>Corpo Institucional (Detalhes)</span> <span id="count-content" class="text-brand-red" aria-live="polite"></span></label>
-                    <textarea id="edit-single-content" rows="6" maxlength="1500" oninput="enforceEditorialLimit(this, 'content', 'count-content')" class="touch-input w-full border border-gray-300 rounded p-3 focus:outline-none text-gray-800 leading-relaxed resize-none"></textarea>
+                    <textarea id="edit-single-content" rows="6" maxlength="1500" oninput="enforceEditorialLimit(this, 'content', 'count-content')" class="editorial-textarea touch-input w-full border border-gray-300 rounded p-3 focus:outline-none text-gray-800 leading-relaxed resize-none"></textarea>
                 </div>
             </div>
             <div class="modal-footer p-4 border-t border-gray-200 bg-gray-50 flex justify-end gap-3 mobile-stack">
@@ -745,8 +758,60 @@
             return value ? value.charAt(0).toLowerCase() + value.slice(1) : '';
         }
 
+        function escapeRegExp(text) {
+            return String(text || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        }
+
+        function removeLegacyAutoHighlightPrefix(title, unitLabel) {
+            let value = normalizeEditorialWhitespace(title, false);
+            const prefixes = [unitLabel, 'A pauta'].filter(Boolean);
+
+            for (const prefix of prefixes) {
+                const pattern = new RegExp(`^${escapeRegExp(prefix)}\\s+destaca\\s+`, 'i');
+                value = value.replace(pattern, '').trim();
+            }
+
+            return value.replace(/^destaca\s+/i, '').trim();
+        }
+
+        function simplifyWeakHeadlineOpening(title) {
+            let value = normalizeEditorialWhitespace(title, false);
+            const weakOpenings = [
+                [/^aconteceu\s+(?:a|o|as|os|uma|um)\s+/i, ''],
+                [/^aconteceram\s+(?:as|os|umas|uns)\s+/i, ''],
+                [/^foi realizada\s+(?:a|uma)\s+/i, ''],
+                [/^foi realizado\s+(?:o|um)\s+/i, ''],
+                [/^foram realizadas\s+(?:as|umas)\s+/i, ''],
+                [/^foram realizados\s+(?:os|uns)\s+/i, '']
+            ];
+
+            weakOpenings.forEach(([pattern, replacement]) => {
+                value = value.replace(pattern, replacement);
+            });
+
+            return value.trim();
+        }
+
+        function selectHeadlinePrefixVerb(title, unit = '', sourceText = '') {
+            const context = normalizeForComparison(`${title} ${unit} ${sourceText}`);
+            const contextualVerbs = [
+                { pattern: /\b(avaliacao|certificacao|prova|oficina|palestra|curso|treinamento|reuniao|visita|atividade)\b/, verb: 'realiza' },
+                { pattern: /\b(evento|campanha|programacao|encontro|workshop|sipat|acao)\b/, verb: 'promove' },
+                { pattern: /\b(parceria|relacionamento|industria|atuacao|estrategia|seguranca)\b/, verb: 'fortalece' },
+                { pattern: /\b(resultado|projeto|iniciativa|programa|certificado)\b/, verb: 'apresenta' },
+                { pattern: /\b(comitiva|representantes|empresa|equipe|alunos|estudantes)\b/, verb: 'recebe' }
+            ];
+
+            const contextualMatch = contextualVerbs.find(item => item.pattern.test(context));
+            if (contextualMatch) return contextualMatch.verb;
+
+            const fallbackVerbs = ['apresenta', 'registra', 'evidencia', 'ressalta', 'valoriza'];
+            const hash = context.split('').reduce((total, char) => total + char.charCodeAt(0), 0);
+            return fallbackVerbs[hash % fallbackVerbs.length];
+        }
+
         function titleHasJournalisticVerb(text) {
-            return /\b(realiza|realizou|promove|promoveu|participa|participou|participaram|recebe|recebeu|inicia|iniciou|celebra|celebrou|encerra|encerrou|acompanha|acompanhou|fortalece|fortaleceu|apresenta|apresentou|desenvolve|desenvolveu|entrega|entregou|capacita|capacitou|forma|formou|sedia|sediou|reúne|reuniu|amplia|ampliou|leva|levou|orienta|orientou|destaca)\b/i.test(text);
+            return /\b(realiza|realizou|realizam|realizaram|promove|promoveu|promovem|promoveram|participa|participou|participam|participaram|recebe|recebeu|recebem|receberam|inicia|iniciou|iniciam|iniciaram|celebra|celebrou|celebram|celebraram|encerra|encerrou|encerram|encerraram|acompanha|acompanhou|acompanham|acompanharam|fortalece|fortaleceu|fortalecem|fortaleceram|apresenta|apresentou|apresentam|apresentaram|desenvolve|desenvolveu|desenvolvem|desenvolveram|entrega|entregou|entregam|entregaram|capacita|capacitou|capacitam|capacitaram|forma|formou|formam|formaram|sedia|sediou|sediam|sediaram|reúne|reuniu|reúnem|reuniram|amplia|ampliou|ampliam|ampliaram|leva|levou|levam|levaram|orienta|orientou|orientam|orientaram|evidencia|evidenciou|evidenciam|evidenciaram|ressalta|ressaltou|ressaltam|ressaltaram|valoriza|valorizou|valorizam|valorizaram|registra|registrou|registram|registraram|marca|marcou|marcam|marcaram|acontece|aconteceu|acontecem|aconteceram|destaca|destacou|destacam|destacaram)\b/i.test(text);
         }
 
         function formatJournalisticTitle(text, unit = '', sourceText = '') {
@@ -760,13 +825,18 @@
             title = title.replace(/^Representantes da unidade participaram(?:\s+(?:de|da|do|dos|das|em))?\s*/i, 'A unidade participou de ');
             title = title.replace(/^A comitiva institucional foi recebida(?:\s+(?:por|pela|pelo|em))?\s*/i, 'A comitiva institucional participou de ');
             title = title.replace(/^(A unidade|A instituição)\b/i, unitLabel || 'A unidade');
+            title = removeLegacyAutoHighlightPrefix(title, unitLabel);
+            title = simplifyWeakHeadlineOpening(title);
 
             if (!title || normalizeForComparison(title) === unitKey) {
                 title = sourceText || `A pauta da ${unitLabel || 'unidade'} apresenta novo destaque institucional.`;
+                title = removeLegacyAutoHighlightPrefix(title, unitLabel);
+                title = simplifyWeakHeadlineOpening(title);
             }
 
             if (!titleHasJournalisticVerb(title)) {
-                title = `${unitLabel || 'A pauta'} destaca ${lowerFirstLetter(title)}`;
+                const prefixVerb = selectHeadlinePrefixVerb(title, unitLabel, sourceText);
+                title = `${unitLabel || 'A pauta'} ${prefixVerb} ${lowerFirstLetter(title)}`;
             }
 
             title = title.charAt(0).toUpperCase() + title.slice(1);
@@ -1021,8 +1091,8 @@
                         <div><label for="edit-date-${item.id}" class="text-[10px] font-bold text-brand-gray uppercase">Data</label><input type="date" value="${safeDate}" id="edit-date-${item.id}" class="touch-input w-full text-xs border border-gray-300 rounded p-2 focus:outline-none focus:ring-2 focus:ring-brand-blue font-bold text-brand-dark"></div>
                     </div>
                     <div class="mb-2"><label for="edit-title-${item.id}" class="flex justify-between text-[10px] font-bold text-brand-gray uppercase"><span>Manchete</span> <span id="count-title-${item.id}" aria-live="polite">${item.title.length}/${EDITORIAL_LIMITS.title}</span></label><textarea id="edit-title-${item.id}" maxlength="${EDITORIAL_LIMITS.title}" oninput="enforceEditorialLimit(this, 'title', 'count-title-${item.id}')" rows="2" class="touch-input w-full text-sm font-bold border border-gray-300 rounded p-2 focus:outline-none focus:ring-2 focus:ring-brand-blue bg-gray-50 resize-none text-brand-dark" style="font-family: 'Montserrat', sans-serif;">${safeTitle}</textarea></div>
-                    <div class="mb-2"><label for="edit-lead-${item.id}" class="flex justify-between text-[10px] font-bold text-brand-gray uppercase"><span>Síntese (Lead)</span> <span id="count-lead-${item.id}" aria-live="polite">${item.lead.length}/${EDITORIAL_LIMITS.lead}</span></label><textarea id="edit-lead-${item.id}" maxlength="${EDITORIAL_LIMITS.lead}" oninput="enforceEditorialLimit(this, 'lead', 'count-lead-${item.id}')" rows="3" class="touch-input w-full text-xs font-semibold text-brand-dark border border-red-200 rounded p-2 focus:outline-none focus:ring-2 focus:ring-brand-blue bg-red-50 resize-none" style="font-family: 'Montserrat', sans-serif;">${safeLead}</textarea></div>
-                    <div class="mb-2"><label for="edit-content-${item.id}" class="flex justify-between text-[10px] font-bold text-brand-gray uppercase"><span>Detalhes Institucionais</span> <span id="count-content-${item.id}" aria-live="polite">${item.content.length}/${EDITORIAL_LIMITS.content}</span></label><textarea id="edit-content-${item.id}" maxlength="${EDITORIAL_LIMITS.content}" oninput="enforceEditorialLimit(this, 'content', 'count-content-${item.id}')" rows="3" class="touch-input w-full text-xs border border-gray-300 rounded p-2 focus:outline-none focus:ring-2 focus:ring-brand-blue text-gray-700 leading-relaxed resize-none" style="font-family: 'Montserrat', sans-serif;">${safeContent}</textarea></div>
+                    <div class="mb-2"><label for="edit-lead-${item.id}" class="flex justify-between text-[10px] font-bold text-brand-gray uppercase"><span>Síntese (Lead)</span> <span id="count-lead-${item.id}" aria-live="polite">${item.lead.length}/${EDITORIAL_LIMITS.lead}</span></label><textarea id="edit-lead-${item.id}" maxlength="${EDITORIAL_LIMITS.lead}" oninput="enforceEditorialLimit(this, 'lead', 'count-lead-${item.id}')" rows="3" class="editorial-textarea touch-input w-full text-xs font-semibold text-brand-dark border border-red-200 rounded p-2 focus:outline-none focus:ring-2 focus:ring-brand-blue bg-red-50 resize-none" style="font-family: 'Montserrat', sans-serif;">${safeLead}</textarea></div>
+                    <div class="mb-2"><label for="edit-content-${item.id}" class="flex justify-between text-[10px] font-bold text-brand-gray uppercase"><span>Detalhes Institucionais</span> <span id="count-content-${item.id}" aria-live="polite">${item.content.length}/${EDITORIAL_LIMITS.content}</span></label><textarea id="edit-content-${item.id}" maxlength="${EDITORIAL_LIMITS.content}" oninput="enforceEditorialLimit(this, 'content', 'count-content-${item.id}')" rows="3" class="editorial-textarea touch-input w-full text-xs border border-gray-300 rounded p-2 focus:outline-none focus:ring-2 focus:ring-brand-blue text-gray-700 leading-relaxed resize-none" style="font-family: 'Montserrat', sans-serif;">${safeContent}</textarea></div>
                     <div><label for="edit-type-${item.id}" class="text-[10px] font-bold text-brand-gray uppercase">Eixo</label><select id="edit-type-${item.id}" class="touch-input w-full text-xs border border-gray-300 rounded p-2 focus:outline-none focus:ring-2 focus:ring-brand-blue bg-brand-info-light text-brand-blue font-semibold"><option value="Educação e Qualificação" ${safeType === 'Educação e Qualificação' ? 'selected' : ''}>Educação e Qualificação</option><option value="Saúde e Segurança" ${safeType === 'Saúde e Segurança' ? 'selected' : ''}>Saúde e Segurança</option><option value="Indústria 4.0 e Inovação" ${safeType === 'Indústria 4.0 e Inovação' ? 'selected' : ''}>Indústria 4.0 e Inovação</option><option value="Relações Institucionais" ${safeType === 'Relações Institucionais' ? 'selected' : ''}>Relações Institucionais</option></select></div>
                 `;
                 container.appendChild(card);
@@ -1178,7 +1248,7 @@
                     let paragraphs = item.content.split(/\n+/); 
                     for(let i = 0; i < paragraphs.length; i++) { 
                         if(paragraphs[i].trim().length > 0) { 
-                            paragraphsHtml += `<p class="text-body mb-4 text-justify text-gray-800" style="font-family: 'Montserrat', sans-serif;">${escapeHtml(paragraphs[i].trim())}</p>`;
+                            paragraphsHtml += `<p class="editorial-text text-body mb-4 text-gray-800" style="font-family: 'Montserrat', sans-serif;">${escapeHtml(paragraphs[i].trim())}</p>`;
                         } 
                     } 
                 }
@@ -1201,7 +1271,7 @@
                         </div>
                         ${imageHtml}
                         <div class="max-w-none">
-                            ${item.lead ? `<div class="text-lead mb-5 text-justify text-brand-dark font-semibold border border-gray-200 bg-gray-50 py-3 px-4 rounded" style="font-family: 'Montserrat', sans-serif;">${escapeHtml(item.lead)}</div>` : ''}
+                            ${item.lead ? `<div class="editorial-text text-lead mb-5 text-brand-dark font-semibold border border-gray-200 bg-gray-50 py-3 px-4 rounded" style="font-family: 'Montserrat', sans-serif;">${escapeHtml(item.lead)}</div>` : ''}
                             ${paragraphsHtml}
                         </div>
                     </div>
@@ -1325,6 +1395,43 @@
                 return y;
             }
 
+            function writeJustifiedLine(line, x, y, width) {
+                const value = normalizePdfText(line);
+                const words = value.split(/\s+/).filter(Boolean);
+                if (words.length < 2) {
+                    pdf.text(value, x, y);
+                    return;
+                }
+
+                const wordsWidth = words.reduce((total, word) => total + pdf.getTextWidth(word), 0);
+                const gapWidth = (width - wordsWidth) / (words.length - 1);
+                if (!Number.isFinite(gapWidth) || gapWidth <= 0) {
+                    pdf.text(value, x, y);
+                    return;
+                }
+
+                let cursorX = x;
+                words.forEach((word, index) => {
+                    pdf.text(word, cursorX, y);
+                    if (index < words.length - 1) {
+                        cursorX += pdf.getTextWidth(word) + gapWidth;
+                    }
+                });
+            }
+
+            function writeEditorialLines(lines, x, y, lineHeight, width) {
+                lines.forEach((line, index) => {
+                    const isLastLine = index === lines.length - 1;
+                    if (isLastLine) {
+                        pdf.text(normalizePdfText(line), x, y);
+                    } else {
+                        writeJustifiedLine(line, x, y, width);
+                    }
+                    y += lineHeight;
+                });
+                return y;
+            }
+
             function renderReport(report, reportIndex) {
                 if (reportIndex > 1) {
                     pdf.addPage();
@@ -1402,7 +1509,7 @@
                     setPdfDrawColor(pdf, PDF_THEME.leadBorder);
                     pdf.roundedRect(page.marginX, y, page.contentWidth, boxHeight, 2, 2, 'FD');
                     setPdfTextColor(pdf, PDF_THEME.dark);
-                    writeLines(leadLines, page.marginX + 5, y + 8, 5.5);
+                    writeEditorialLines(leadLines, page.marginX + 5, y + 8, 5.5, page.contentWidth - 10);
                     y += boxHeight + 8;
                 }
 
@@ -1428,9 +1535,13 @@
                     pdf.setFontSize(10.5);
                     setPdfTextColor(pdf, [31, 41, 55]);
                     const bodyLines = pdf.splitTextToSize(paragraph, page.contentWidth);
-                    bodyLines.forEach((line) => {
+                    bodyLines.forEach((line, lineIndex) => {
                         ensureSpace(5.7);
-                        pdf.text(line, page.marginX, y);
+                        if (lineIndex === bodyLines.length - 1) {
+                            pdf.text(normalizePdfText(line), page.marginX, y);
+                        } else {
+                            writeJustifiedLine(line, page.marginX, y, page.contentWidth);
+                        }
                         y += 5.7;
                     });
                     y += 3.5;
