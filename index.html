@@ -227,6 +227,7 @@
                     Sistema FIEG | <span id="current-date-display" class="text-brand-dark"></span> 
                 </p>
                 <p id="active-filters-display" class="text-brand-red font-bold text-sm mt-1"></p>
+                <p id="autosave-status" class="text-brand-success font-bold text-xs mt-2" aria-live="polite">Salvamento automático ativo</p>
             </div>
             
             <div class="flex flex-col items-end gap-4 mt-4 md:mt-0 w-full md:w-auto">
@@ -415,7 +416,7 @@
                 </div>
             </div>
             <div class="modal-footer p-4 border-t border-gray-200 bg-gray-50 flex justify-end gap-3 mobile-stack">
-                <button onclick="closeEditModal()" class="tap-target mobile-full px-5 py-2 text-gray-600 font-bold hover:bg-gray-200 rounded-lg transition">Cancelar</button>
+                <button onclick="closeEditModal()" class="tap-target mobile-full px-5 py-2 text-gray-600 font-bold hover:bg-gray-200 rounded-lg transition">Fechar</button>
                 <button onclick="saveEditedReport()" class="tap-target mobile-full px-5 py-2 bg-brand-blue text-white font-bold rounded-lg hover:bg-blue-900 shadow-md transition flex items-center gap-2">
                     <i class="ph-fill ph-check-circle" aria-hidden="true"></i> Atualizar Matéria
                 </button>
@@ -457,6 +458,13 @@
             content: 1500
         });
         const JOURNALISTIC_TITLE_MAX = 140;
+        const REPORTS_STORAGE_KEY = 'fiegReportsDb';
+        const DRAFT_STORAGE_KEY = 'fiegReportsDraft';
+        const AUTOSAVE_DELAY_MS = 650;
+        var autosaveTimers = { reports: null, draft: null };
+        var autosaveChains = { reports: Promise.resolve(), draft: Promise.resolve() };
+        var autosaveState = { isBootstrapping: true };
+        var singleEditAutosaveBound = false;
 
         function escapeHtml(value) {
             return String(value ?? '').replace(/[&<>"']/g, (char) => ({
@@ -468,27 +476,145 @@
             }[char]));
         }
 
+        function setAutosaveStatus(message, tone = 'success') {
+            const status = document.getElementById('autosave-status');
+            if (!status) return;
+            const colors = {
+                success: '#166534',
+                saving: '#003A70',
+                error: '#B91C1C'
+            };
+            status.innerText = message;
+            status.style.color = colors[tone] || colors.success;
+        }
+
+        function formatAutosaveTime(date = new Date()) {
+            return new Intl.DateTimeFormat('pt-BR', {
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            }).format(date);
+        }
+
+        function prepareReportForStorage(report, options = {}) {
+            const { keepOriginalImage = false, normalize = true } = options;
+            const prepared = normalize ? normalizeReportForStorage(report) : { ...report };
+            delete prepared.rawImage;
+            if (!keepOriginalImage) delete prepared.originalImage;
+            return prepared;
+        }
+
+        function prepareReportsForStorage(reportList, options = {}) {
+            return (Array.isArray(reportList) ? reportList : []).map((report) => prepareReportForStorage(report, options));
+        }
+
+        function scheduleReportsAutosave() {
+            if (autosaveState.isBootstrapping) return;
+            if (autosaveTimers.reports) clearTimeout(autosaveTimers.reports);
+            setAutosaveStatus('Salvando automaticamente...', 'saving');
+            autosaveTimers.reports = setTimeout(() => {
+                saveReportsNow();
+            }, AUTOSAVE_DELAY_MS);
+        }
+
+        function scheduleDraftAutosave() {
+            if (autosaveState.isBootstrapping) return;
+            if (autosaveTimers.draft) clearTimeout(autosaveTimers.draft);
+            setAutosaveStatus('Salvando rascunho automaticamente...', 'saving');
+            autosaveTimers.draft = setTimeout(() => {
+                saveDraftNow();
+            }, AUTOSAVE_DELAY_MS);
+        }
+
+        async function saveReportsNow(options = {}) {
+            if (autosaveState.isBootstrapping) return;
+            if (autosaveTimers.reports) {
+                clearTimeout(autosaveTimers.reports);
+                autosaveTimers.reports = null;
+            }
+
+            const operation = async () => {
+                try {
+                    reports = prepareReportsForStorage(reports, { keepOriginalImage: false, normalize: true });
+                    await localforage.setItem(REPORTS_STORAGE_KEY, reports);
+                    setAutosaveStatus(`Última alteração salva às ${formatAutosaveTime()}.`, 'success');
+                } catch (e) {
+                    console.error(e);
+                    setAutosaveStatus('Não foi possível salvar automaticamente.', 'error');
+                    if (options.alertOnError) {
+                        alert("⚠️ Erro ao salvar as alterações na base de dados local.");
+                    }
+                    if (options.throwOnError) throw e;
+                }
+            };
+
+            autosaveChains.reports = autosaveChains.reports.then(operation, operation);
+            return autosaveChains.reports;
+        }
+
+        async function saveDraftNow(options = {}) {
+            if (autosaveState.isBootstrapping) return;
+            if (autosaveTimers.draft) {
+                clearTimeout(autosaveTimers.draft);
+                autosaveTimers.draft = null;
+            }
+
+            const operation = async () => {
+                try {
+                    const draft = prepareReportsForStorage(parsedReportsCache, { keepOriginalImage: true, normalize: false });
+                    if (draft.length === 0) {
+                        await localforage.removeItem(DRAFT_STORAGE_KEY);
+                    } else {
+                        await localforage.setItem(DRAFT_STORAGE_KEY, draft);
+                    }
+                    setAutosaveStatus(draft.length > 0 ? `Rascunho salvo às ${formatAutosaveTime()}.` : `Última alteração salva às ${formatAutosaveTime()}.`, 'success');
+                } catch (e) {
+                    console.error(e);
+                    setAutosaveStatus('Não foi possível salvar o rascunho automaticamente.', 'error');
+                    if (options.alertOnError) {
+                        alert("⚠️ Erro ao salvar o rascunho da importação.");
+                    }
+                    if (options.throwOnError) throw e;
+                }
+            };
+
+            autosaveChains.draft = autosaveChains.draft.then(operation, operation);
+            return autosaveChains.draft;
+        }
+
         document.getElementById('current-date-display').innerText = new Intl.DateTimeFormat('pt-BR', { dateStyle: 'long' }).format(new Date());
 
         // Inicialização Assíncrona para o localForage (IndexedDB)
         window.onload = async () => { 
             try {
                 // Tenta carregar a base de dados robusta do IndexedDB
-                reports = await localforage.getItem('fiegReportsDb') || [];
+                reports = await localforage.getItem(REPORTS_STORAGE_KEY) || [];
+                parsedReportsCache = await localforage.getItem(DRAFT_STORAGE_KEY) || [];
                 
                 // Rotina de Migração Segura: Se o IndexedDB estiver vazio, mas existir dados antigos no localStorage (V34)
                 if (reports.length === 0) {
                     const oldData = localStorage.getItem('fiegReportsV34');
                     if (oldData) {
                         reports = JSON.parse(oldData);
-                        await localforage.setItem('fiegReportsDb', reports);
+                        await localforage.setItem(REPORTS_STORAGE_KEY, reports);
                     }
                 }
             } catch (e) {
                 reports = [];
+                parsedReportsCache = [];
             }
             reports = Array.isArray(reports) ? reports.map(normalizeReportForStorage) : [];
-            setTimeout(() => { applyFilters(); }, 100);
+            parsedReportsCache = Array.isArray(parsedReportsCache) ? parsedReportsCache : [];
+            autosaveState.isBootstrapping = false;
+            setTimeout(() => {
+                window.applyFilters();
+                if (parsedReportsCache.length > 0) {
+                    window.openModal();
+                    setAutosaveStatus(`Rascunho recuperado às ${formatAutosaveTime()}.`, 'success');
+                } else {
+                    setAutosaveStatus(`Base carregada às ${formatAutosaveTime()}.`, 'success');
+                }
+            }, 100);
         }
 
         // --- SISTEMA DE MODAL DE CONFIRMAÇÃO ---
@@ -577,6 +703,7 @@
                 if (item) {
                     item.image = newImageBase64;
                     renderReviewCards();
+                    await saveDraftNow({ alertOnError: true });
                 }
             } else {
                 let item = reports.find(r => r.id === currentCropId);
@@ -584,7 +711,7 @@
                     item.image = newImageBase64;
                     try {
                         // Utiliza o novo IndexedDB ilimitado
-                        await localforage.setItem('fiegReportsDb', reports);
+                        await saveReportsNow({ alertOnError: true });
                     } catch(e) {
                         alert("⚠️ Erro crítico ao salvar as alterações na base de dados.");
                     }
@@ -1110,6 +1237,116 @@
             if (counter) counter.innerText = `${field.value.length}/${limit}`;
         }
 
+        function syncParsedReportFromControls(id) {
+            const item = parsedReportsCache.find((report) => report.id === id);
+            if (!item) return false;
+            const fieldMap = {
+                unit: `edit-unit-${id}`,
+                date: `edit-date-${id}`,
+                title: `edit-title-${id}`,
+                lead: `edit-lead-${id}`,
+                content: `edit-content-${id}`,
+                type: `edit-type-${id}`
+            };
+
+            Object.entries(fieldMap).forEach(([field, elementId]) => {
+                const element = document.getElementById(elementId);
+                if (element) item[field] = element.value;
+            });
+            return true;
+        }
+
+        function syncAllParsedReportsFromControls() {
+            parsedReportsCache.forEach((item) => syncParsedReportFromControls(item.id));
+        }
+
+        function syncSingleEditorToReport() {
+            const modal = document.getElementById('edit-single-modal');
+            if (!modal || modal.classList.contains('hidden')) return false;
+
+            const id = document.getElementById('edit-single-id')?.value;
+            const index = reports.findIndex((report) => report.id === id);
+            if (index === -1) return false;
+
+            reports[index].unit = document.getElementById('edit-single-unit').value;
+            reports[index].type = document.getElementById('edit-single-type').value;
+            reports[index].date = document.getElementById('edit-single-date').value;
+            reports[index].title = document.getElementById('edit-single-title').value;
+            reports[index].lead = document.getElementById('edit-single-lead').value;
+            reports[index].content = document.getElementById('edit-single-content').value;
+            return true;
+        }
+
+        function syncActiveEditorsFromDom() {
+            syncAllParsedReportsFromControls();
+            syncSingleEditorToReport();
+        }
+
+        function bindReviewAutosaveControls() {
+            parsedReportsCache.forEach((item) => {
+                const ids = [
+                    `edit-unit-${item.id}`,
+                    `edit-date-${item.id}`,
+                    `edit-title-${item.id}`,
+                    `edit-lead-${item.id}`,
+                    `edit-content-${item.id}`,
+                    `edit-type-${item.id}`
+                ];
+
+                ids.forEach((elementId) => {
+                    const element = document.getElementById(elementId);
+                    if (!element || element.dataset.autosaveBound === 'true') return;
+                    const updateDraft = () => {
+                        syncParsedReportFromControls(item.id);
+                        scheduleDraftAutosave();
+                    };
+                    element.addEventListener('input', updateDraft);
+                    element.addEventListener('change', updateDraft);
+                    element.addEventListener('blur', () => {
+                        if (syncParsedReportFromControls(item.id)) saveDraftNow();
+                    });
+                    element.dataset.autosaveBound = 'true';
+                });
+            });
+        }
+
+        function bindSingleEditAutosaveControls() {
+            if (singleEditAutosaveBound) return;
+            const ids = [
+                'edit-single-unit',
+                'edit-single-date',
+                'edit-single-type',
+                'edit-single-title',
+                'edit-single-lead',
+                'edit-single-content'
+            ];
+
+            ids.forEach((elementId) => {
+                const element = document.getElementById(elementId);
+                if (!element) return;
+                const updateReport = () => {
+                    if (syncSingleEditorToReport()) scheduleReportsAutosave();
+                };
+                element.addEventListener('input', updateReport);
+                element.addEventListener('change', updateReport);
+                element.addEventListener('blur', () => {
+                    if (syncSingleEditorToReport()) saveReportsNow();
+                });
+            });
+            singleEditAutosaveBound = true;
+        }
+
+        function flushAutosaveNow() {
+            syncActiveEditorsFromDom();
+            if (autosaveTimers.reports) saveReportsNow();
+            if (autosaveTimers.draft || parsedReportsCache.length > 0) saveDraftNow();
+        }
+
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'hidden') flushAutosaveNow();
+        });
+        window.addEventListener('pagehide', flushAutosaveNow);
+
         function extractDate(text) {
             const regex = /(\d{1,2})(?:\s*e\s*\d{1,2})?\s+de\s+([a-zA-ZçÇ]+)(?:\s+de\s+(\d{4}))?/;
             const match = text.match(regex);
@@ -1145,6 +1382,7 @@
                     localStorage.clear();
                     
                     reports = [];
+                    parsedReportsCache = [];
                     applyFilters();
                     
                     // Atualiza a página para libertar memória RAM fantasma
@@ -1205,6 +1443,7 @@
             await Promise.all(imagePromises);
 
             renderReviewCards();
+            await saveDraftNow({ alertOnError: true });
         }
 
         // --- TELA DE REVISÃO ---
@@ -1246,13 +1485,15 @@
                 `;
                 container.appendChild(card);
             });
+            bindReviewAutosaveControls();
         }
 
-        window.removeParsedCard = function(id) {
+        window.removeParsedCard = async function(id) {
             parsedReportsCache = parsedReportsCache.filter(item => item.id !== id);
             const cardElement = document.getElementById(`parsed-card-${id}`);
             if (cardElement) cardElement.remove();
             document.getElementById('review-count').innerText = parsedReportsCache.length;
+            await saveDraftNow({ alertOnError: true });
         }
 
         window.saveAllParsedReports = async function(event) {
@@ -1260,6 +1501,7 @@
             const originalText = btn.innerHTML; 
             btn.innerHTML = "Salvando...";
             btn.disabled = true;
+            syncAllParsedReportsFromControls();
             
             // Aplica edições feitas na tela
             parsedReportsCache.forEach((item) => {
@@ -1278,11 +1520,10 @@
             
             try { 
                 let newReportsData = [...reports, ...parsedReportsCache]; 
-                
-                // O localForage usa o IndexedDB para salvar tamanhos grandes de forma segura.
-                await localforage.setItem('fiegReportsDb', newReportsData); 
-                
-                reports = newReportsData; 
+                reports = newReportsData;
+                await saveReportsNow({ alertOnError: true, throwOnError: true });
+                parsedReportsCache = [];
+                await saveDraftNow({ alertOnError: true, throwOnError: true });
                 applyFilters(); 
                 closeModal(); 
             } catch (e) { 
@@ -1293,8 +1534,22 @@
             }
         }
 
-        window.openModal = function() { document.getElementById('import-modal').classList.remove('hidden'); document.getElementById('stage-upload').classList.remove('hidden'); document.getElementById('stage-review').classList.add('hidden'); document.getElementById('upload-feedback').innerText = "Selecionar arquivos Word (.docx)"; }
-        window.closeModal = function() { document.getElementById('import-modal').classList.add('hidden'); document.getElementById('word-upload').value = ''; }
+        window.openModal = function() {
+            document.getElementById('import-modal').classList.remove('hidden');
+            if (parsedReportsCache.length > 0) {
+                renderReviewCards();
+            } else {
+                document.getElementById('stage-upload').classList.remove('hidden');
+                document.getElementById('stage-review').classList.add('hidden');
+                document.getElementById('upload-feedback').innerText = "Selecionar arquivos Word (.docx)";
+            }
+        }
+        window.closeModal = function() {
+            syncAllParsedReportsFromControls();
+            if (parsedReportsCache.length > 0) saveDraftNow();
+            document.getElementById('import-modal').classList.add('hidden');
+            document.getElementById('word-upload').value = '';
+        }
 
         // --- FUNÇÕES DE EDIÇÃO INDIVIDUAL E EXCLUSÃO (MAIN FEED) ---
         window.editReport = function(id) {
@@ -1314,8 +1569,13 @@
             document.getElementById('count-content').innerText = (report.content ? report.content.length : 0) + `/${EDITORIAL_LIMITS.content}`;
             
             document.getElementById('edit-single-modal').classList.remove('hidden');
+            bindSingleEditAutosaveControls();
         }
-        window.closeEditModal = function() { document.getElementById('edit-single-modal').classList.add('hidden'); }
+        window.closeEditModal = function(options = {}) {
+            if (!options.skipAutosave && syncSingleEditorToReport()) saveReportsNow();
+            document.getElementById('edit-single-modal').classList.add('hidden');
+            applyFilters();
+        }
         
         window.saveEditedReport = async function() {
             const id = document.getElementById('edit-single-id').value; const index = reports.findIndex(r => r.id === id); if(index === -1) return;
@@ -1330,11 +1590,11 @@
             
             try {
                 // Guarda de forma assíncrona no IndexedDB
-                await localforage.setItem('fiegReportsDb', reports); 
+                await saveReportsNow({ throwOnError: true });
             } catch (e) {
                 alert("⚠️ Erro ao salvar as alterações na base de dados local.");
             }
-            closeEditModal(); 
+            closeEditModal({ skipAutosave: true });
             applyFilters();
         }
         
@@ -1344,7 +1604,7 @@
                 "Deseja apagar esta matéria definitivamente do sistema?",
                 async () => {
                     reports = reports.filter(r => r.id !== id); 
-                    await localforage.setItem('fiegReportsDb', reports); 
+                    await saveReportsNow({ alertOnError: true });
                     applyFilters(); 
                 }
             );
