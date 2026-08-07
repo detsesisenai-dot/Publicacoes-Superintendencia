@@ -322,7 +322,7 @@
                         <span class="block text-xs text-brand-gray mt-4 text-left max-w-xs mx-auto" id="upload-limits">
                             Títulos: máx. 200 caracteres<br>
                             Sínteses (Lead): máx. 500 caracteres<br>
-                            Corpo: máx. 1500 caracteres<br>
+                            Corpo: conteúdo integral do documento<br>
                             Imagens centralizadas em Widescreen 2:1
                         </span>
                     </label>
@@ -412,7 +412,7 @@
                 </div>
                 <div>
                     <label for="edit-single-content" class="flex justify-between text-[10px] font-bold text-brand-gray uppercase mb-1"><span>Corpo Institucional (Detalhes)</span> <span id="count-content" class="text-brand-red" aria-live="polite"></span></label>
-                    <textarea id="edit-single-content" rows="6" maxlength="1500" oninput="enforceEditorialLimit(this, 'content', 'count-content')" class="editorial-textarea touch-input w-full border border-gray-300 rounded p-3 focus:outline-none text-gray-800 leading-relaxed resize-none"></textarea>
+                    <textarea id="edit-single-content" rows="6" oninput="enforceEditorialLimit(this, 'content', 'count-content')" class="editorial-textarea touch-input w-full border border-gray-300 rounded p-3 focus:outline-none text-gray-800 leading-relaxed resize-none"></textarea>
                 </div>
             </div>
             <div class="modal-footer p-4 border-t border-gray-200 bg-gray-50 flex justify-end gap-3 mobile-stack">
@@ -455,7 +455,8 @@
         const EDITORIAL_LIMITS = Object.freeze({
             title: 200,
             lead: 500,
-            content: 1500
+            // O corpo institucional não possui limite artificial: o conteúdo importado deve ser preservado integralmente.
+            content: null
         });
         const JOURNALISTIC_TITLE_MAX = 140;
         const REPORTS_STORAGE_KEY = 'fiegReportsDb';
@@ -732,14 +733,14 @@
                     const origCanvas = document.createElement('canvas');
                     let oW = img.width;
                     let oH = img.height;
-                    const MAX_ORIG = 800; 
+                    const MAX_ORIG = 1200; 
                     if (oW > oH && oW > MAX_ORIG) { oH *= MAX_ORIG / oW; oW = MAX_ORIG; }
                     else if (oH > MAX_ORIG) { oW *= MAX_ORIG / oH; oH = MAX_ORIG; }
                     origCanvas.width = oW;
                     origCanvas.height = oH;
                     const origCtx = origCanvas.getContext('2d');
                     origCtx.drawImage(img, 0, 0, oW, oH);
-                    const originalImage = origCanvas.toDataURL('image/jpeg', 0.50); 
+                    const originalImage = origCanvas.toDataURL('image/jpeg', 0.78); 
 
                     const cropCanvas = document.createElement('canvas'); 
                     cropCanvas.width = 1000; 
@@ -749,7 +750,7 @@
                     const x = (cropCanvas.width / 2) - (img.width / 2) * scale;
                     const y = (cropCanvas.height / 2) - (img.height / 2) * scale;
                     cropCtx.drawImage(img, x, y, img.width * scale, img.height * scale); 
-                    const croppedImage = cropCanvas.toDataURL('image/jpeg', 0.70); 
+                    const croppedImage = cropCanvas.toDataURL('image/jpeg', 0.82); 
 
                     resolve({ original: originalImage, cropped: croppedImage });
                 }; 
@@ -780,9 +781,11 @@
         }
 
         function semanticTrim(text, maxLength, isBody = false) {
-            if (!maxLength || maxLength < 1) return '';
             let value = normalizeEditorialWhitespace(text, isBody);
             if (!value) return '';
+
+            // maxLength nulo/indefinido significa conteúdo sem truncamento.
+            if (!Number.isFinite(maxLength) || maxLength <= 0) return value;
 
             if (value.length > maxLength) {
                 const reservedForPunctuation = isBody ? 1 : 0;
@@ -1174,24 +1177,44 @@
             return semanticTrim(lead, EDITORIAL_LIMITS.lead, true);
         }
 
-        function applyEditorialFieldsToReport(report, rawContent) {
-            const cleanContent = cleanAndImproveText(rawContent);
+        function applyEditorialFieldsToReport(report, rawContent, options = {}) {
+            const preserveSourceText = options.preserveSourceText === true;
+            const preserveImportedTitle = options.preserveImportedTitle === true;
+            const cleanContent = preserveSourceText
+                ? normalizeEditorialWhitespace(rawContent, true)
+                : cleanAndImproveText(rawContent);
             const paragraphs = cleanContent.split(/\n+/).map(p => p.trim()).filter(Boolean);
+
             if (paragraphs.length > 0) {
                 const firstPar = paragraphs[0];
                 const firstParagraphSentences = splitIntoSentences(firstPar);
-                const title = generateTitle(firstPar, report.unit);
-                report.title = title;
-                report.lead = generateExecutiveSummary(firstPar, title);
 
-                const bodyArr = [];
-                const restOfFirstParagraph = firstParagraphSentences.slice(1).join(' ');
-                if (restOfFirstParagraph) bodyArr.push(restOfFirstParagraph);
-                for (let j = 1; j < paragraphs.length; j++) bodyArr.push(paragraphs[j]);
-                report.content = semanticTrim(bodyArr.join('\n\n'), EDITORIAL_LIMITS.content, true);
+                if (!normalizeEditorialWhitespace(report.title, false)) {
+                    report.title = generateTitle(firstPar, report.unit);
+                }
+                if (!normalizeEditorialWhitespace(report.lead, false)) {
+                    report.lead = generateExecutiveSummary(firstPar, report.title);
+                }
+
+                if (preserveSourceText) {
+                    // Importação documental: mantém TODO o corpo original no campo de edição.
+                    report.content = cleanContent;
+                } else {
+                    const bodyArr = [];
+                    const restOfFirstParagraph = firstParagraphSentences.slice(1).join(' ');
+                    if (restOfFirstParagraph) bodyArr.push(restOfFirstParagraph);
+                    for (let j = 1; j < paragraphs.length; j++) bodyArr.push(paragraphs[j]);
+                    report.content = semanticTrim(bodyArr.join('\n\n'), EDITORIAL_LIMITS.content, true);
+                }
+            } else {
+                report.content = normalizeEditorialWhitespace(report.content || '', true);
             }
-            if (!report.type) report.type = inferCategory(rawContent);
-            if (!report.date) report.date = new Date().toISOString().split('T')[0];
+
+            if (preserveImportedTitle && normalizeEditorialWhitespace(report.title, false)) {
+                report.preserveImportedTitle = true;
+            }
+            if (!report.type) report.type = inferCategory(`${report.title || ''} ${rawContent || ''}`);
+            if (!report.date) report.date = extractDate(rawContent || '') || new Date().toISOString().split('T')[0];
             return normalizeReportForStorage(report);
         }
 
@@ -1199,7 +1222,11 @@
             const normalized = { ...report };
             normalized.unit = normalizeEditorialWhitespace(normalized.unit, false);
             const titleSource = `${normalized.lead || ''} ${normalized.content || ''}`.trim();
-            normalized.title = formatJournalisticTitle(normalized.title, normalized.unit, titleSource);
+            if (normalized.preserveImportedTitle && normalizeEditorialWhitespace(normalized.title, false)) {
+                normalized.title = semanticTrim(normalized.title, EDITORIAL_LIMITS.title, false);
+            } else {
+                normalized.title = formatJournalisticTitle(normalized.title, normalized.unit, titleSource);
+            }
             normalized.lead = semanticTrim(normalized.lead, EDITORIAL_LIMITS.lead, true);
             normalized.content = semanticTrim(normalized.content, EDITORIAL_LIMITS.content, true);
             return normalized;
@@ -1208,7 +1235,9 @@
         function ensureDistinctTitles(reportList) {
             const seen = new Set();
             reportList.forEach((item) => {
-                item.title = formatJournalisticTitle(item.title, item.unit, `${item.lead || ''} ${item.content || ''}`);
+                item.title = item.preserveImportedTitle
+                    ? semanticTrim(item.title, EDITORIAL_LIMITS.title, false)
+                    : formatJournalisticTitle(item.title, item.unit, `${item.lead || ''} ${item.content || ''}`);
                 let key = normalizeForComparison(item.title);
                 if (seen.has(key)) {
                     const alternativeSource = splitIntoSentences(`${item.lead || ''} ${item.content || ''}`)
@@ -1229,12 +1258,16 @@
 
         function enforceEditorialLimit(field, limitKey, counterId) {
             const limit = EDITORIAL_LIMITS[limitKey];
-            if (!field || !limit) return;
-            if (field.value.length > limit) {
+            if (!field) return;
+            if (Number.isFinite(limit) && limit > 0 && field.value.length > limit) {
                 field.value = field.value.substring(0, limit);
             }
             const counter = document.getElementById(counterId);
-            if (counter) counter.innerText = `${field.value.length}/${limit}`;
+            if (counter) {
+                counter.innerText = Number.isFinite(limit) && limit > 0
+                    ? `${field.value.length}/${limit}`
+                    : `${field.value.length} caracteres`;
+            }
         }
 
         function syncParsedReportFromControls(id) {
@@ -1348,8 +1381,17 @@
         window.addEventListener('pagehide', flushAutosaveNow);
 
         function extractDate(text) {
-            const regex = /(\d{1,2})(?:\s*e\s*\d{1,2})?\s+de\s+([a-zA-ZçÇ]+)(?:\s+de\s+(\d{4}))?/;
-            const match = text.match(regex);
+            const value = String(text || '');
+            const numericMatch = value.match(/\b(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{4})\b/);
+            if (numericMatch) {
+                const day = numericMatch[1].padStart(2, '0');
+                const month = numericMatch[2].padStart(2, '0');
+                const year = numericMatch[3];
+                return `${year}-${month}-${day}`;
+            }
+
+            const regex = /(\d{1,2})(?:\s*e\s*\d{1,2})?\s+de\s+([a-zA-ZÀ-ÿçÇ]+)(?:\s+de\s+(\d{4}))?/i;
+            const match = value.match(regex);
             if (match) {
                 const day = match[1].padStart(2, '0');
                 const monthStr = match[2].toLowerCase();
@@ -1391,53 +1433,265 @@
             );
         }
 
+        function extractImportedNodeText(node) {
+            if (!node || node.nodeType !== Node.ELEMENT_NODE) return '';
+            const tagName = String(node.tagName || '').toUpperCase();
+
+            if (tagName === 'TABLE') {
+                return Array.from(node.querySelectorAll('tr'))
+                    .map((row) => Array.from(row.querySelectorAll('th,td'))
+                        .map((cell) => normalizeEditorialWhitespace(cell.textContent, false))
+                        .filter(Boolean)
+                        .join(' | '))
+                    .filter(Boolean)
+                    .join('\n');
+            }
+
+            if (tagName === 'UL' || tagName === 'OL') {
+                return Array.from(node.querySelectorAll(':scope > li'))
+                    .map((item) => normalizeEditorialWhitespace(item.textContent, false))
+                    .filter(Boolean)
+                    .map((item) => `• ${item}`)
+                    .join('\n');
+            }
+
+            return normalizeEditorialWhitespace(node.textContent, true);
+        }
+
+        function getImportedBoldRatio(node) {
+            if (!node || node.nodeType !== Node.ELEMENT_NODE) return 0;
+            const walker = document.createTreeWalker(node, NodeFilter.SHOW_TEXT);
+            let totalChars = 0;
+            let boldChars = 0;
+            let currentNode;
+
+            while ((currentNode = walker.nextNode())) {
+                const text = String(currentNode.nodeValue || '').replace(/\s+/g, '');
+                if (!text) continue;
+                totalChars += text.length;
+                const parent = currentNode.parentElement;
+                if (parent && parent.closest('strong,b')) boldChars += text.length;
+            }
+
+            return totalChars > 0 ? boldChars / totalChars : 0;
+        }
+
+        function getUppercaseLetterRatio(text) {
+            const letters = String(text || '').match(/[A-Za-zÀ-ÖØ-öø-ÿ]/g) || [];
+            if (letters.length === 0) return 0;
+            const uppercase = letters.filter((letter) => letter === letter.toUpperCase() && letter !== letter.toLowerCase()).length;
+            return uppercase / letters.length;
+        }
+
+        function isLikelyImportedHeadline(node, rawText) {
+            const text = normalizeEditorialWhitespace(rawText, false);
+            if (!text || text.length < 8 || text.length > 240 || node.nodeType !== Node.ELEMENT_NODE) return false;
+
+            const tagName = String(node.tagName || '').toUpperCase();
+            if (/^H[1-6]$/.test(tagName)) return true;
+            if (tagName !== 'P' && tagName !== 'DIV') return false;
+
+            const boldRatio = getImportedBoldRatio(node);
+            const uppercaseRatio = getUppercaseLetterRatio(text);
+            const sentenceMarks = (text.match(/[.!?](?:\s|$)/g) || []).length;
+            const wordCount = text.split(/\s+/).filter(Boolean).length;
+            const bodyLike = sentenceMarks >= 2 || (/[.!?]$/.test(text) && text.length > 170);
+            const visuallyEmphasized = boldRatio >= 0.72 || (uppercaseRatio >= 0.78 && wordCount >= 2);
+
+            return visuallyEmphasized && !bodyLike;
+        }
+
+        function inferImportedUnit(title, body) {
+            const titleText = normalizeEditorialWhitespace(title, false);
+            const combined = normalizeEditorialWhitespace(`${titleText} ${body || ''}`, false);
+            const preferredPatterns = [
+                [/\bHotel\s+SESI\s+Aruanã\b/i, 'Hotel SESI Aruanã'],
+                [/\bSESI\s+Multiparque\b/i, 'SESI Multiparque'],
+                [/\bSENAI\s+Hub\b/i, 'SENAI Hub'],
+                [/\bIST\s+Automação\b/i, 'IST Automação'],
+                [/\bUnidade\s+Digital\b/i, 'Unidade Digital'],
+                [/\bSENAI\s+DR\s+MS\b/i, 'SENAI DR MS'],
+                [/\bSENAI\s+DF\b/i, 'SENAI DF'],
+                [/\bSENAI[-\s]+Goiás\b/i, 'SENAI Goiás'],
+                [/\bSESI\s+Goiás\b/i, 'SESI Goiás'],
+                [/\bFATEC\b/i, 'FATEC']
+            ];
+
+            for (const [pattern, label] of preferredPatterns) {
+                if (pattern.test(titleText)) return label;
+            }
+            for (const [pattern, label] of preferredPatterns) {
+                if (pattern.test(combined)) return label;
+            }
+
+            const hasSesi = /\bSESI\b/i.test(combined);
+            const hasSenai = /\bSENAI\b/i.test(combined);
+            const hasFieg = /\bFIEG\b/i.test(combined);
+            if ((hasSesi && hasSenai) || hasFieg) return 'Sistema FIEG';
+            if (hasSenai) return 'SENAI';
+            if (hasSesi) return 'SESI';
+            return 'Unidade não informada';
+        }
+
+        function getImportedImages(node) {
+            if (!node || node.nodeType !== Node.ELEMENT_NODE) return [];
+            if (String(node.tagName || '').toUpperCase() === 'IMG') return [node];
+            return Array.from(node.querySelectorAll('img'));
+        }
+
+        function attachImportedImages(action, images) {
+            if (!action || !Array.isArray(images) || images.length === 0) return;
+            action.rawAdditionalImages = Array.isArray(action.rawAdditionalImages) ? action.rawAdditionalImages : [];
+            images.forEach((img) => {
+                const src = img?.src;
+                if (!src) return;
+                if (!action.rawImage) {
+                    action.rawImage = src;
+                } else if (src !== action.rawImage && !action.rawAdditionalImages.includes(src)) {
+                    action.rawAdditionalImages.push(src);
+                }
+            });
+        }
+
+        function finalizeImportedAction(action) {
+            if (!action) return null;
+            const rawContent = (action._contentParts || []).filter(Boolean).join('\n\n');
+            const title = normalizeEditorialWhitespace(action.title, false);
+            if (!title && !rawContent) return null;
+
+            if (!action.unit) action.unit = inferImportedUnit(title, rawContent);
+            if (!action.date) action.date = extractDate(`${title}\n${rawContent}`);
+            if (!action.type) action.type = inferCategory(`${title}\n${rawContent}`);
+
+            const normalized = applyEditorialFieldsToReport(action, rawContent, {
+                preserveSourceText: true,
+                preserveImportedTitle: Boolean(title)
+            });
+            delete normalized._contentParts;
+            return normalized;
+        }
+
         async function processWordFiles(event) {
             const files = event.target.files;
             if (!files || files.length === 0) return;
-            document.getElementById('upload-feedback').innerText = "Processando e higienizando textos...";
+            document.getElementById('upload-feedback').innerText = "Lendo integralmente todos os documentos...";
             parsedReportsCache = [];
-            for (let i = 0; i < files.length; i++) {
-                const arrayBuffer = await files[i].arrayBuffer();
-                const result = await mammoth.convertToHtml({arrayBuffer: arrayBuffer});
+
+            for (let fileIndex = 0; fileIndex < files.length; fileIndex++) {
+                const file = files[fileIndex];
+                const arrayBuffer = await file.arrayBuffer();
+                const result = await mammoth.convertToHtml(
+                    { arrayBuffer },
+                    {
+                        styleMap: [
+                            "p[style-name='Title'] => h1:fresh",
+                            "p[style-name='Título'] => h1:fresh",
+                            "p[style-name='Heading 1'] => h1:fresh",
+                            "p[style-name='Título 1'] => h1:fresh",
+                            "p[style-name='Heading 2'] => h2:fresh",
+                            "p[style-name='Título 2'] => h2:fresh",
+                            "p[style-name='Heading 3'] => h3:fresh",
+                            "p[style-name='Título 3'] => h3:fresh"
+                        ],
+                        includeDefaultStyleMap: true
+                    }
+                );
+
                 const tempDiv = document.createElement('div');
                 tempDiv.innerHTML = result.value;
+                const nodes = Array.from(tempDiv.childNodes).filter((node) => node.nodeType === Node.ELEMENT_NODE);
+
                 let currentAction = null;
-                let rawAccumulatedContent = "";
-                const nodes = Array.from(tempDiv.childNodes);
-                
-                for (let node of nodes) {
-                    let rawText = node.textContent;
-                    let textUpper = rawText.toUpperCase();
-                    let isUnitHeader = rawText.length > 0 && rawText.length < 80 && (textUpper.includes('SESI') || textUpper.includes('SENAI') || textUpper.includes('FATEC'));
-                    
-                    if (isUnitHeader && node.tagName !== 'IMG' && !node.querySelector('img')) {
-                        if (currentAction && rawAccumulatedContent.length > 10) {
-                            parsedReportsCache.push(applyEditorialFieldsToReport(currentAction, rawAccumulatedContent));
+                let preambleParts = [];
+                let pendingImages = [];
+                let detectedHeadlines = 0;
+
+                const pushCurrentAction = () => {
+                    const finalized = finalizeImportedAction(currentAction);
+                    if (finalized) parsedReportsCache.push(finalized);
+                    currentAction = null;
+                };
+
+                for (const node of nodes) {
+                    const rawText = extractImportedNodeText(node);
+                    const images = getImportedImages(node);
+                    const isHeadline = isLikelyImportedHeadline(node, rawText);
+
+                    if (isHeadline) {
+                        if (currentAction) pushCurrentAction();
+                        detectedHeadlines += 1;
+                        currentAction = {
+                            id: `rep_${Date.now()}_${fileIndex}_${Math.random().toString(36).slice(2, 8)}`,
+                            unit: '',
+                            title: rawText.replace(/\*/g, '').trim(),
+                            lead: '',
+                            date: '',
+                            type: '',
+                            content: '',
+                            image: null,
+                            rawImage: null,
+                            sourceFile: file.name,
+                            preserveImportedTitle: true,
+                            _contentParts: preambleParts.length > 0 ? [...preambleParts] : []
+                        };
+                        preambleParts = [];
+                        if (pendingImages.length > 0) {
+                            attachImportedImages(currentAction, pendingImages);
+                            pendingImages = [];
                         }
-                        currentAction = { id: 'rep_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5), unit: rawText.replace(/\*/g, '').trim(), title: '', lead: '', date: '', type: '', content: '', image: null, rawImage: null };
-                        rawAccumulatedContent = ""; 
-                    } else if (currentAction) {
-                        if (!currentAction.date && rawText.length > 5) { let extracted = extractDate(rawText); if(extracted) currentAction.date = extracted; }
-                        if (rawText.trim().length > 0) { rawAccumulatedContent += (rawAccumulatedContent ? '\n\n' : '') + rawText; }
-                        if (!currentAction.image && !currentAction.rawImage) { 
-                            const img = node.tagName === 'IMG' ? node : node.querySelector('img'); 
-                            if (img && img.src) currentAction.rawImage = img.src; 
-                        }
+                        attachImportedImages(currentAction, images);
+                        continue;
+                    }
+
+                    if (currentAction) {
+                        if (rawText) currentAction._contentParts.push(rawText);
+                        if (!currentAction.date && rawText) currentAction.date = extractDate(rawText);
+                        attachImportedImages(currentAction, images);
+                    } else {
+                        if (rawText) preambleParts.push(rawText);
+                        if (images.length > 0) pendingImages.push(...images);
                     }
                 }
-                if (currentAction && rawAccumulatedContent.length > 10) {
-                    parsedReportsCache.push(applyEditorialFieldsToReport(currentAction, rawAccumulatedContent));
+
+                if (currentAction) pushCurrentAction();
+
+                // Fallback de segurança: documentos sem títulos formatados nunca ficam vazios.
+                if (detectedHeadlines === 0 && preambleParts.length > 0) {
+                    const allText = preambleParts.join('\n\n');
+                    const firstParagraph = preambleParts[0] || `Conteúdo importado de ${file.name}`;
+                    const fallbackAction = {
+                        id: `rep_${Date.now()}_${fileIndex}_${Math.random().toString(36).slice(2, 8)}`,
+                        unit: inferImportedUnit(firstParagraph, allText),
+                        title: generateTitle(firstParagraph, inferImportedUnit(firstParagraph, allText)),
+                        lead: '',
+                        date: extractDate(allText),
+                        type: inferCategory(allText),
+                        content: '',
+                        image: null,
+                        rawImage: null,
+                        sourceFile: file.name,
+                        _contentParts: [...preambleParts]
+                    };
+                    attachImportedImages(fallbackAction, pendingImages);
+                    const finalized = finalizeImportedAction(fallbackAction);
+                    if (finalized) parsedReportsCache.push(finalized);
                 }
             }
 
             ensureDistinctTitles(parsedReportsCache);
-            document.getElementById('upload-feedback').innerText = "Aplicando enquadramentos matemáticos...";
+            document.getElementById('upload-feedback').innerText = `Processando imagens de ${parsedReportsCache.length} pauta${parsedReportsCache.length === 1 ? '' : 's'}...`;
             const imagePromises = parsedReportsCache.map(async (item) => {
                 if (item.rawImage) {
                     const processed = await processImageForStorage(item.rawImage);
                     item.originalImage = processed.original;
                     item.image = processed.cropped;
                     delete item.rawImage;
+                }
+                // Mantém imagens adicionais de forma otimizada, sem alterar o layout atual.
+                if (Array.isArray(item.rawAdditionalImages) && item.rawAdditionalImages.length > 0) {
+                    const additionalProcessed = await Promise.all(item.rawAdditionalImages.map(processImageForStorage));
+                    item.additionalImages = additionalProcessed.map((imageData) => imageData.cropped).filter(Boolean);
+                    delete item.rawAdditionalImages;
                 }
             });
             await Promise.all(imagePromises);
@@ -1480,7 +1734,7 @@
                     </div>
                     <div class="mb-2"><label for="edit-title-${item.id}" class="flex justify-between text-[10px] font-bold text-brand-gray uppercase"><span>Manchete</span> <span id="count-title-${item.id}" aria-live="polite">${item.title.length}/${EDITORIAL_LIMITS.title}</span></label><textarea id="edit-title-${item.id}" maxlength="${EDITORIAL_LIMITS.title}" oninput="enforceEditorialLimit(this, 'title', 'count-title-${item.id}')" rows="2" class="touch-input w-full text-sm font-bold border border-gray-300 rounded p-2 focus:outline-none focus:ring-2 focus:ring-brand-blue bg-gray-50 resize-none text-brand-dark" style="font-family: 'Montserrat', sans-serif;">${safeTitle}</textarea></div>
                     <div class="mb-2"><label for="edit-lead-${item.id}" class="flex justify-between text-[10px] font-bold text-brand-gray uppercase"><span>Síntese (Lead)</span> <span id="count-lead-${item.id}" aria-live="polite">${item.lead.length}/${EDITORIAL_LIMITS.lead}</span></label><textarea id="edit-lead-${item.id}" maxlength="${EDITORIAL_LIMITS.lead}" oninput="enforceEditorialLimit(this, 'lead', 'count-lead-${item.id}')" rows="3" class="editorial-textarea touch-input w-full text-xs font-semibold text-brand-dark border border-red-200 rounded p-2 focus:outline-none focus:ring-2 focus:ring-brand-blue bg-red-50 resize-none" style="font-family: 'Montserrat', sans-serif;">${safeLead}</textarea></div>
-                    <div class="mb-2"><label for="edit-content-${item.id}" class="flex justify-between text-[10px] font-bold text-brand-gray uppercase"><span>Detalhes Institucionais</span> <span id="count-content-${item.id}" aria-live="polite">${item.content.length}/${EDITORIAL_LIMITS.content}</span></label><textarea id="edit-content-${item.id}" maxlength="${EDITORIAL_LIMITS.content}" oninput="enforceEditorialLimit(this, 'content', 'count-content-${item.id}')" rows="3" class="editorial-textarea touch-input w-full text-xs border border-gray-300 rounded p-2 focus:outline-none focus:ring-2 focus:ring-brand-blue text-gray-700 leading-relaxed resize-none" style="font-family: 'Montserrat', sans-serif;">${safeContent}</textarea></div>
+                    <div class="mb-2"><label for="edit-content-${item.id}" class="flex justify-between text-[10px] font-bold text-brand-gray uppercase"><span>Detalhes Institucionais</span> <span id="count-content-${item.id}" aria-live="polite">${item.content.length} caracteres</span></label><textarea id="edit-content-${item.id}" oninput="enforceEditorialLimit(this, 'content', 'count-content-${item.id}')" rows="3" class="editorial-textarea touch-input w-full text-xs border border-gray-300 rounded p-2 focus:outline-none focus:ring-2 focus:ring-brand-blue text-gray-700 leading-relaxed resize-none" style="font-family: 'Montserrat', sans-serif;">${safeContent}</textarea></div>
                     <div><label for="edit-type-${item.id}" class="text-[10px] font-bold text-brand-gray uppercase">Eixo</label><select id="edit-type-${item.id}" class="touch-input w-full text-xs border border-gray-300 rounded p-2 focus:outline-none focus:ring-2 focus:ring-brand-blue bg-brand-info-light text-brand-blue font-semibold"><option value="Educação e Qualificação" ${safeType === 'Educação e Qualificação' ? 'selected' : ''}>Educação e Qualificação</option><option value="Saúde e Segurança" ${safeType === 'Saúde e Segurança' ? 'selected' : ''}>Saúde e Segurança</option><option value="Indústria 4.0 e Inovação" ${safeType === 'Indústria 4.0 e Inovação' ? 'selected' : ''}>Indústria 4.0 e Inovação</option><option value="Relações Institucionais" ${safeType === 'Relações Institucionais' ? 'selected' : ''}>Relações Institucionais</option></select></div>
                 `;
                 container.appendChild(card);
@@ -1566,7 +1820,7 @@
             document.getElementById('count-lead').innerText = (report.lead ? report.lead.length : 0) + `/${EDITORIAL_LIMITS.lead}`;
             
             document.getElementById('edit-single-content').value = report.content || '';
-            document.getElementById('count-content').innerText = (report.content ? report.content.length : 0) + `/${EDITORIAL_LIMITS.content}`;
+            document.getElementById('count-content').innerText = `${report.content ? report.content.length : 0} caracteres`;
             
             document.getElementById('edit-single-modal').classList.remove('hidden');
             bindSingleEditAutosaveControls();
@@ -1689,22 +1943,49 @@
             });
         }
 
-        function loadBase64Image(url) {
+        function loadBase64Image(url, timeoutMs = 8000) {
             return new Promise((resolve) => {
+                if (!url) {
+                    resolve(null);
+                    return;
+                }
+
                 const img = new Image();
-                img.crossOrigin = 'Anonymous';
+                let settled = false;
+                const finish = (value) => {
+                    if (settled) return;
+                    settled = true;
+                    clearTimeout(timer);
+                    resolve(value);
+                };
+                const timer = setTimeout(() => finish(null), timeoutMs);
+
+                if (!String(url).startsWith('data:')) {
+                    img.crossOrigin = 'Anonymous';
+                }
+
                 img.onload = () => {
                     try {
                         const canvas = document.createElement('canvas');
-                        canvas.width = img.width;
-                        canvas.height = img.height;
-                        canvas.getContext('2d').drawImage(img, 0, 0);
-                        resolve({ dataUrl: canvas.toDataURL('image/png'), width: img.width, height: img.height });
+                        canvas.width = img.naturalWidth || img.width;
+                        canvas.height = img.naturalHeight || img.height;
+                        const ctx = canvas.getContext('2d');
+                        if (!ctx || !canvas.width || !canvas.height) {
+                            finish(null);
+                            return;
+                        }
+                        ctx.drawImage(img, 0, 0);
+                        finish({
+                            dataUrl: canvas.toDataURL('image/png'),
+                            width: canvas.width,
+                            height: canvas.height
+                        });
                     } catch (e) {
-                        resolve(null);
+                        console.warn('Não foi possível converter a imagem para o PDF.', e);
+                        finish(null);
                     }
                 };
-                img.onerror = () => resolve(null);
+                img.onerror = () => finish(null);
                 img.src = url;
             });
         }
@@ -1714,6 +1995,7 @@
             blue: [0, 58, 112],
             dark: [43, 45, 66],
             gray: [91, 102, 122],
+            body: [31, 41, 55],
             border: [229, 231, 235],
             light: [244, 246, 249],
             leadBg: [249, 250, 251],
@@ -1737,7 +2019,16 @@
         }
 
         function normalizePdfText(value) {
-            return String(value ?? '').replace(/[ \t\r\f\v]+/g, ' ').replace(/\n{3,}/g, '\n\n').trim();
+            return String(value ?? '')
+                .replace(/\u00AD/g, '')
+                .replace(/[\u00A0\u2007\u202F]/g, ' ')
+                .replace(/[\u2018\u2019]/g, "'")
+                .replace(/[\u201C\u201D]/g, '"')
+                .replace(/[\u2013\u2014]/g, '-')
+                .replace(/\u2026/g, '...')
+                .replace(/[ \t\r\f\v]+/g, ' ')
+                .replace(/\n{3,}/g, '\n\n')
+                .trim();
         }
 
         function getDataUrlImageFormat(dataUrl) {
@@ -1755,50 +2046,140 @@
                 .map(normalizeReportForStorage);
         }
 
-        function drawPdfChrome(pdf, logo) {
+        function drawPdfChrome(pdf, logo, pageContexts = [], totalReports = 0) {
             const pageWidth = pdf.internal.pageSize.getWidth();
             const pageHeight = pdf.internal.pageSize.getHeight();
             const totalPages = pdf.internal.getNumberOfPages();
 
             for (let pageNumber = 1; pageNumber <= totalPages; pageNumber++) {
                 pdf.setPage(pageNumber);
+                const context = pageContexts[pageNumber - 1] || null;
+
+                // Cabeçalho institucional.
                 setPdfDrawColor(pdf, PDF_THEME.blue);
                 pdf.setLineWidth(0.3);
                 pdf.line(15, 25, pageWidth - 15, 25);
 
                 if (logo) {
-                    const imgWidth = 24;
-                    const imgHeight = (logo.height * imgWidth) / logo.width;
-                    pdf.addImage(logo.dataUrl, 'PNG', pageWidth - 15 - imgWidth, 8, imgWidth, imgHeight);
+                    try {
+                        const imgWidth = 24;
+                        const imgHeight = (logo.height * imgWidth) / logo.width;
+                        pdf.addImage(logo.dataUrl, 'PNG', pageWidth - 15 - imgWidth, 8, imgWidth, imgHeight, 'fieg-logo', 'FAST');
+                    } catch (e) {
+                        console.warn('Logo indisponível no cabeçalho do PDF.', e);
+                    }
                 }
 
-                pdf.setFont('helvetica', 'normal');
-                pdf.setFontSize(8);
+                // Rodapé protegido por linha separadora.
+                setPdfDrawColor(pdf, PDF_THEME.border);
+                pdf.setLineWidth(0.2);
+                pdf.line(15, pageHeight - 18, pageWidth - 15, pageHeight - 18);
+
+                pdf.setFont('helvetica', 'bold');
+                pdf.setFontSize(7.5);
                 setPdfTextColor(pdf, PDF_THEME.gray);
-                pdf.text(`Informe Executivo Institucional Sistema FIEG - Pág. ${pageNumber} de ${totalPages}`, 15, pageHeight - 10);
+                const pautaLabel = context?.reportIndex
+                    ? `Pauta ${context.reportIndex} de ${totalReports}${context.continuation ? ' | continuação' : ''}`
+                    : `Informe Executivo`;
+                pdf.text(pautaLabel, 15, pageHeight - 12.5);
+                pdf.text(`Pág. ${pageNumber} de ${totalPages}`, pageWidth - 15, pageHeight - 12.5, { align: 'right' });
+
+                pdf.setFont('helvetica', 'normal');
+                pdf.setFontSize(7);
+                setPdfTextColor(pdf, PDF_THEME.gray);
+                pdf.text('Informe Executivo Institucional Sistema FIEG', 15, pageHeight - 7.5);
             }
         }
 
-        async function buildOfficialPdf(selectedReports) {
+        async function buildOfficialPdf(selectedReports, onProgress = null) {
             const PdfClass = getPdfLibrary();
             if (!PdfClass) {
                 throw new Error('A biblioteca de PDF não foi carregada.');
             }
 
-            const pdf = new PdfClass({ unit: 'mm', format: 'a4', orientation: 'portrait', compress: true });
+            const pdf = new PdfClass({
+                unit: 'mm',
+                format: 'a4',
+                orientation: 'portrait',
+                compress: true,
+                putOnlyUsedFonts: true
+            });
+
+            if (typeof pdf.setLanguage === 'function') pdf.setLanguage('pt-BR');
+            if (typeof pdf.setProperties === 'function') {
+                pdf.setProperties({
+                    title: 'Informe Executivo - Sistema FIEG',
+                    subject: 'Informe Executivo Institucional',
+                    author: 'Sistema FIEG',
+                    creator: 'Informe Executivo Sistema FIEG'
+                });
+            }
+
             const logo = await loadBase64Image(PDF_LOGO_URL);
             const page = {
                 width: pdf.internal.pageSize.getWidth(),
                 height: pdf.internal.pageSize.getHeight(),
                 marginX: 16,
                 top: 36,
-                bottom: 24,
-                contentWidth: 178
+                bottom: 26
             };
+            page.contentWidth = page.width - (page.marginX * 2);
+            page.contentBottom = page.height - page.bottom;
+
+            const pageContexts = [];
+
+            function currentPageNumber() {
+                return pdf.internal.getNumberOfPages();
+            }
+
+            function registerCurrentPage(reportIndex, continuation = false) {
+                pageContexts[currentPageNumber() - 1] = { reportIndex, continuation };
+            }
+
+            function addPdfPage(reportIndex, continuation = false) {
+                pdf.addPage('a4', 'portrait');
+                registerCurrentPage(reportIndex, continuation);
+            }
+
+            function setUnitStyle() {
+                pdf.setFont('helvetica', 'bold');
+                pdf.setFontSize(8);
+                setPdfTextColor(pdf, PDF_THEME.blue);
+            }
+
+            function setTitleStyle() {
+                pdf.setFont('helvetica', 'bold');
+                pdf.setFontSize(16);
+                setPdfTextColor(pdf, PDF_THEME.dark);
+            }
+
+            function setMetaStyle() {
+                pdf.setFont('helvetica', 'bold');
+                pdf.setFontSize(8.5);
+                setPdfTextColor(pdf, PDF_THEME.gray);
+            }
+
+            function setLeadStyle() {
+                pdf.setFont('helvetica', 'bold');
+                pdf.setFontSize(11);
+                setPdfTextColor(pdf, PDF_THEME.dark);
+            }
+
+            function setBodyStyle() {
+                pdf.setFont('helvetica', 'normal');
+                pdf.setFontSize(10.5);
+                setPdfTextColor(pdf, PDF_THEME.body);
+            }
+
+            function setContinuationStyle() {
+                pdf.setFont('helvetica', 'bold');
+                pdf.setFontSize(8);
+                setPdfTextColor(pdf, PDF_THEME.gray);
+            }
 
             function writeLines(lines, x, y, lineHeight, options = {}) {
                 lines.forEach((line) => {
-                    pdf.text(line, x, y, options);
+                    pdf.text(normalizePdfText(line), x, y, options);
                     y += lineHeight;
                 });
                 return y;
@@ -1806,15 +2187,20 @@
 
             function writeJustifiedLine(line, x, y, width) {
                 const value = normalizePdfText(line);
+                if (!value) return;
+
                 const words = value.split(/\s+/).filter(Boolean);
-                if (words.length < 2) {
+                if (words.length < 3) {
                     pdf.text(value, x, y);
                     return;
                 }
 
                 const wordsWidth = words.reduce((total, word) => total + pdf.getTextWidth(word), 0);
                 const gapWidth = (width - wordsWidth) / (words.length - 1);
-                if (!Number.isFinite(gapWidth) || gapWidth <= 0) {
+                const regularSpaceWidth = Math.max(pdf.getTextWidth(' '), 0.6);
+
+                // Evita linhas visualmente "esticadas" quando sobra espaço demais.
+                if (!Number.isFinite(gapWidth) || gapWidth <= 0 || gapWidth > regularSpaceWidth * 2.35) {
                     pdf.text(value, x, y);
                     return;
                 }
@@ -1841,129 +2227,215 @@
                 return y;
             }
 
-            function renderReport(report, reportIndex) {
+            async function renderReport(report, reportIndex) {
                 if (reportIndex > 1) {
-                    pdf.addPage();
+                    addPdfPage(reportIndex, false);
+                } else {
+                    registerCurrentPage(reportIndex, false);
                 }
+
                 let y = page.top;
                 const title = normalizePdfText(semanticTrim(report.title || 'Matéria sem título', EDITORIAL_LIMITS.title, true));
                 const unit = normalizePdfText(report.unit || 'Unidade não informada').toUpperCase();
-                const date = formatReportDate(report.date);
+                const date = normalizePdfText(formatReportDate(report.date));
                 const type = normalizePdfText(report.type || 'Eixo não informado');
 
                 function addContinuationPage() {
-                    pdf.addPage();
+                    addPdfPage(reportIndex, true);
                     y = page.top;
-                    pdf.setFont('helvetica', 'bold');
-                    pdf.setFontSize(8);
-                    setPdfTextColor(pdf, PDF_THEME.gray);
+
+                    setContinuationStyle();
+                    const continuationUnit = pdf.splitTextToSize(unit, page.contentWidth);
+                    y = writeLines(continuationUnit, page.marginX, y, 4.0);
+                    y += 1.5;
+
                     const continuationTitle = pdf.splitTextToSize(`${title} | continuação`, page.contentWidth);
                     y = writeLines(continuationTitle, page.marginX, y, 4.2);
-                    y += 6;
+                    y += 5;
                 }
 
-                function ensureSpace(requiredHeight) {
-                    if (y + requiredHeight > page.height - page.bottom) {
-                        addContinuationPage();
-                    }
+                function ensureSpace(requiredHeight, restoreStyle = null) {
+                    if (y + requiredHeight <= page.contentBottom) return false;
+                    addContinuationPage();
+                    if (typeof restoreStyle === 'function') restoreStyle();
+                    return true;
                 }
 
-                pdf.setFont('helvetica', 'bold');
-                pdf.setFontSize(8);
-                setPdfTextColor(pdf, PDF_THEME.blue);
+                // Unidade.
+                setUnitStyle();
                 const unitLines = pdf.splitTextToSize(unit, page.contentWidth);
+                ensureSpace(unitLines.length * 4.2 + 3, setUnitStyle);
                 y = writeLines(unitLines, page.marginX, y, 4.2);
                 y += 3;
 
-                pdf.setFont('helvetica', 'bold');
-                pdf.setFontSize(16);
-                setPdfTextColor(pdf, PDF_THEME.dark);
+                // Manchete.
+                setTitleStyle();
                 const titleLines = pdf.splitTextToSize(title, page.contentWidth);
-                ensureSpace(titleLines.length * 7 + 15);
+                ensureSpace(titleLines.length * 7 + 15, setTitleStyle);
                 y = writeLines(titleLines, page.marginX, y, 7);
                 y += 5;
 
-                pdf.setFont('helvetica', 'bold');
-                pdf.setFontSize(8.5);
-                setPdfTextColor(pdf, PDF_THEME.gray);
+                // Metadados.
+                setMetaStyle();
                 const metaLines = pdf.splitTextToSize(`${date}  |  ${type}`, page.contentWidth);
+                ensureSpace(metaLines.length * 4.5 + 8, setMetaStyle);
                 y = writeLines(metaLines, page.marginX, y, 4.5);
                 y += 8;
 
+                // Imagem institucional 2:1.
                 if (report.image) {
                     const imageHeight = page.contentWidth / 2;
                     ensureSpace(imageHeight + 10);
+                    let imageDrawn = false;
                     try {
-                        pdf.addImage(report.image, getDataUrlImageFormat(report.image), page.marginX, y, page.contentWidth, imageHeight, undefined, 'FAST');
+                        const imageFormat = getDataUrlImageFormat(report.image);
+                        pdf.addImage(
+                            report.image,
+                            imageFormat,
+                            page.marginX,
+                            y,
+                            page.contentWidth,
+                            imageHeight,
+                            `report-image-${report.id || reportIndex}`,
+                            'MEDIUM'
+                        );
+                        imageDrawn = true;
                     } catch (e) {
+                        console.warn(`Imagem da pauta ${reportIndex} não pôde ser inserida no PDF.`, e);
+                    }
+
+                    if (imageDrawn) {
+                        y += imageHeight + 10;
+                    } else {
+                        const placeholderHeight = 24;
+                        ensureSpace(placeholderHeight + 8);
                         setPdfFillColor(pdf, PDF_THEME.light);
                         setPdfDrawColor(pdf, PDF_THEME.border);
-                        pdf.rect(page.marginX, y, page.contentWidth, imageHeight, 'FD');
+                        pdf.roundedRect(page.marginX, y, page.contentWidth, placeholderHeight, 2, 2, 'FD');
                         pdf.setFont('helvetica', 'bold');
                         pdf.setFontSize(9);
                         setPdfTextColor(pdf, PDF_THEME.gray);
-                        pdf.text('Imagem indisponível para exportação', page.marginX + 6, y + 12);
+                        pdf.text('Imagem indisponível para exportação', page.marginX + 6, y + 13);
+                        y += placeholderHeight + 8;
                     }
-                    y += imageHeight + 10;
                 }
 
+                // Síntese executiva. O bloco inteiro é mantido na mesma página.
                 const lead = normalizePdfText(semanticTrim(report.lead, EDITORIAL_LIMITS.lead, true));
                 if (lead) {
-                    pdf.setFont('helvetica', 'bold');
-                    pdf.setFontSize(11);
+                    setLeadStyle();
                     const leadLines = pdf.splitTextToSize(lead, page.contentWidth - 10);
                     const boxHeight = Math.max(20, leadLines.length * 5.5 + 10);
-                    ensureSpace(boxHeight + 7);
+                    ensureSpace(boxHeight + 8, setLeadStyle);
                     setPdfFillColor(pdf, PDF_THEME.leadBg);
                     setPdfDrawColor(pdf, PDF_THEME.leadBorder);
                     pdf.roundedRect(page.marginX, y, page.contentWidth, boxHeight, 2, 2, 'FD');
-                    setPdfTextColor(pdf, PDF_THEME.dark);
+                    setLeadStyle();
                     writeEditorialLines(leadLines, page.marginX + 5, y + 8, 5.5, page.contentWidth - 10);
                     y += boxHeight + 8;
                 }
 
+                // Corpo integral. Não há truncamento e as quebras preservam o estilo tipográfico.
                 const paragraphs = String(semanticTrim(report.content || '', EDITORIAL_LIMITS.content, true))
                     .split(/\n+/)
                     .map(normalizePdfText)
                     .filter(Boolean);
 
-                pdf.setFont('helvetica', 'normal');
-                pdf.setFontSize(10.5);
-                setPdfTextColor(pdf, [31, 41, 55]);
+                function writeBodyParagraph(paragraph) {
+                    const lineHeight = 5.7;
+                    const paragraphGap = 3.5;
+                    setBodyStyle();
+                    const bodyLines = pdf.splitTextToSize(paragraph, page.contentWidth);
+                    let cursor = 0;
 
-                if (paragraphs.length === 0) {
-                    ensureSpace(8);
-                    pdf.setFont('helvetica', 'italic');
-                    setPdfTextColor(pdf, PDF_THEME.gray);
-                    pdf.text('Sem corpo institucional informado.', page.marginX, y);
-                    return;
+                    while (cursor < bodyLines.length) {
+                        setBodyStyle();
+                        const remaining = bodyLines.length - cursor;
+                        let capacity = Math.floor((page.contentBottom - y) / lineHeight);
+
+                        // Evita deixar apenas uma linha isolada no fim da página.
+                        if (capacity < 2 && remaining > 1) {
+                            addContinuationPage();
+                            continue;
+                        }
+
+                        capacity = Math.max(1, capacity);
+                        let take = Math.min(capacity, remaining);
+
+                        // Evita uma linha órfã sozinha no topo da página seguinte.
+                        if (remaining - take === 1 && take > 1) {
+                            take -= 1;
+                        }
+
+                        if (take <= 0) {
+                            addContinuationPage();
+                            continue;
+                        }
+
+                        for (let offset = 0; offset < take; offset++) {
+                            setBodyStyle();
+                            const lineIndex = cursor + offset;
+                            const line = bodyLines[lineIndex];
+                            const isParagraphLastLine = lineIndex === bodyLines.length - 1;
+
+                            if (isParagraphLastLine) {
+                                pdf.text(normalizePdfText(line), page.marginX, y);
+                            } else {
+                                writeJustifiedLine(line, page.marginX, y, page.contentWidth);
+                            }
+                            y += lineHeight;
+                        }
+
+                        cursor += take;
+                        if (cursor < bodyLines.length) {
+                            addContinuationPage();
+                        }
+                    }
+
+                    if (y + paragraphGap <= page.contentBottom) {
+                        y += paragraphGap;
+                    }
                 }
 
-                paragraphs.forEach((paragraph) => {
-                    pdf.setFont('helvetica', 'normal');
-                    pdf.setFontSize(10.5);
-                    setPdfTextColor(pdf, [31, 41, 55]);
-                    const bodyLines = pdf.splitTextToSize(paragraph, page.contentWidth);
-                    bodyLines.forEach((line, lineIndex) => {
-                        ensureSpace(5.7);
-                        if (lineIndex === bodyLines.length - 1) {
-                            pdf.text(normalizePdfText(line), page.marginX, y);
-                        } else {
-                            writeJustifiedLine(line, page.marginX, y, page.contentWidth);
-                        }
-                        y += 5.7;
+                if (paragraphs.length === 0) {
+                    ensureSpace(8, () => {
+                        pdf.setFont('helvetica', 'italic');
+                        pdf.setFontSize(10.5);
+                        setPdfTextColor(pdf, PDF_THEME.gray);
                     });
-                    y += 3.5;
-                });
+                    pdf.setFont('helvetica', 'italic');
+                    pdf.setFontSize(10.5);
+                    setPdfTextColor(pdf, PDF_THEME.gray);
+                    pdf.text('Sem corpo institucional informado.', page.marginX, y);
+                    y += 8;
+                } else {
+                    paragraphs.forEach(writeBodyParagraph);
+                }
 
-                pdf.setFont('helvetica', 'bold');
-                pdf.setFontSize(7.5);
-                setPdfTextColor(pdf, PDF_THEME.gray);
-                pdf.text(`Pauta ${reportIndex} de ${selectedReports.length}`, page.marginX, page.height - 16);
+                if (typeof onProgress === 'function') {
+                    onProgress({
+                        reportIndex,
+                        totalReports: selectedReports.length,
+                        totalPages: pdf.internal.getNumberOfPages()
+                    });
+                }
+
+                // Libera o event loop sem interromper a ordem da composição.
+                if (reportIndex % 2 === 0) {
+                    await new Promise((resolve) => setTimeout(resolve, 0));
+                }
             }
 
-            selectedReports.forEach((report, index) => renderReport(report, index + 1));
-            drawPdfChrome(pdf, logo);
+            for (let index = 0; index < selectedReports.length; index++) {
+                await renderReport(selectedReports[index], index + 1);
+            }
+
+            const totalPages = pdf.internal.getNumberOfPages();
+            if (totalPages < selectedReports.length) {
+                throw new Error('Falha de integridade na paginação do PDF.');
+            }
+
+            drawPdfChrome(pdf, logo, pageContexts, selectedReports.length);
             return pdf;
         }
 
@@ -1972,26 +2444,40 @@
             const loadingOverlay = document.getElementById('pdf-loading');
             const loadingText = document.getElementById('pdf-loading-text');
             const originalText = btn.innerHTML;
+
+            // Garante que qualquer edição ainda aberta no DOM seja refletida no estado antes da exportação.
+            syncActiveEditorsFromDom();
             const selectedReports = getReportsSelectedForPdf();
 
             if (selectedReports.length === 0) {
-                alert("Nenhuma pauta selecionada para o PDF. Revise os filtros ou marque pelo menos uma matéria para inclusão.");
+                alert('Nenhuma pauta selecionada para o PDF. Revise os filtros ou marque pelo menos uma matéria para inclusão.');
                 return;
             }
 
             try {
                 btn.disabled = true;
                 btn.innerHTML = '<i class="ph ph-file-pdf text-xl" aria-hidden="true"></i> Gerando PDF...';
-                loadingText.innerText = `Compondo ${selectedReports.length} pauta${selectedReports.length > 1 ? 's' : ''} com paginação oficial.`;
+                loadingText.innerText = `Preparando ${selectedReports.length} pauta${selectedReports.length > 1 ? 's' : ''} para o relatório oficial.`;
                 loadingOverlay.classList.remove('hidden');
                 loadingOverlay.classList.add('flex');
                 loadingOverlay.setAttribute('aria-hidden', 'false');
 
-                const pdf = await buildOfficialPdf(selectedReports);
-                pdf.save(`Informe_Executivo_FIEG_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.pdf`);
+                // Permite que o navegador pinte o overlay antes do processamento pesado.
+                await new Promise((resolve) => requestAnimationFrame(() => resolve()));
+
+                const pdf = await buildOfficialPdf(selectedReports, ({ reportIndex, totalReports, totalPages }) => {
+                    loadingText.innerText = `Compondo pauta ${reportIndex} de ${totalReports} • ${totalPages} página${totalPages > 1 ? 's' : ''} gerada${totalPages > 1 ? 's' : ''}.`;
+                });
+
+                const finalPages = pdf.internal.getNumberOfPages();
+                loadingText.innerText = `Finalizando ${finalPages} página${finalPages > 1 ? 's' : ''} do relatório oficial...`;
+                await new Promise((resolve) => setTimeout(resolve, 0));
+
+                const fileDate = new Date().toISOString().slice(0, 10).split('-').reverse().join('-');
+                pdf.save(`Informe_Executivo_FIEG_${fileDate}.pdf`);
             } catch (e) {
-                console.error(e);
-                alert("Houve um erro ao processar o PDF. Recarregue a página e tente novamente.");
+                console.error('Erro ao gerar PDF oficial:', e);
+                alert('Houve um erro ao processar o PDF. Os dados permaneceram salvos. Recarregue a página e tente novamente.');
             } finally {
                 loadingOverlay.classList.add('hidden');
                 loadingOverlay.classList.remove('flex');
